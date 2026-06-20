@@ -9,7 +9,7 @@ const darkTheme = EditorView.theme(
       color: '#e0e0e0',
       fontSize: '14px',
       borderRadius: '8px',
-      border: '1px solid #2a2a4a',
+      border: '1px solid #3d3d60',
     },
     '.cm-content': {
       caretColor: '#64ffda',
@@ -23,7 +23,7 @@ const darkTheme = EditorView.theme(
     },
     '.cm-gutters': {
       backgroundColor: '#151528',
-      color: '#4a4a6a',
+      color: '#8888a8',
       border: 'none',
     },
     '.cm-activeLine': {

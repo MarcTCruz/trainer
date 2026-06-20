@@ -12,14 +12,14 @@
   --bg-card: #1a1a2e;
   --bg-hover: #1e1e3a;
   --text-primary: #e0e0e0;
-  --text-secondary: #8888aa;
-  --text-muted: #5a5a7a;
+  --text-secondary: #9999bb;
+  --text-muted: #9494b8;
   --accent: #64ffda;
   --accent-dim: #64ffda33;
-  --success: #4caf50;
-  --error: #ef5350;
-  --warning: #ffa726;
-  --border: #2a2a4a;
+  --success: #66bb6a;
+  --error: #ff6b6b;
+  --warning: #ffb74d;
+  --border: #3d3d60;
   --font-mono: 'Fira Code', 'Cascadia Code', 'JetBrains Mono', monospace;
   --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
 }
@@ -121,18 +121,18 @@ body {
 }
 
 .difficulty-badge[data-level='easy'] {
-  background: #4caf5033;
-  color: #4caf50;
+  background: #66bb6a22;
+  color: #81c784;
 }
 
 .difficulty-badge[data-level='medium'] {
-  background: #ffa72633;
-  color: #ffa726;
+  background: #ffb74d22;
+  color: #ffcc80;
 }
 
 .difficulty-badge[data-level='hard'] {
-  background: #ef535033;
-  color: #ef5350;
+  background: #ff6b6b22;
+  color: #ff8a80;
 }
 
 .exercise-description {
