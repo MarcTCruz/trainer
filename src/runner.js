@@ -1,12 +1,19 @@
-import { getQuickJS, shouldInterruptAfterDeadline } from 'quickjs-emscripten'
-
 const TIMEOUT_MS = 5000
-const MAX_MEMORY_BYTES = 1024 * 1024 * 10 // 10MB
+const MAX_MEMORY_BYTES = 1024 * 1024 * 10
 
 let quickJSModule = null
+let qjsApi = null
+
+async function loadQuickJS() {
+  if (!qjsApi) {
+    qjsApi = await import('quickjs-emscripten')
+  }
+  return qjsApi
+}
 
 export async function ensureQuickJS() {
   if (quickJSModule) return quickJSModule
+  const { getQuickJS } = await loadQuickJS()
   quickJSModule = await getQuickJS()
   return quickJSModule
 }
@@ -33,6 +40,7 @@ function deepEqual(a, b) {
 
 export async function runExercise(userCode, exercise) {
   const QuickJS = await ensureQuickJS()
+  const { shouldInterruptAfterDeadline } = await loadQuickJS()
   const vm = QuickJS.newContext()
 
   vm.runtime.setInterruptHandler(shouldInterruptAfterDeadline(Date.now() + TIMEOUT_MS))
