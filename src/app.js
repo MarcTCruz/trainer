@@ -78,14 +78,14 @@ async function handleRun() {
     if (result.allPassed) {
       const state = markSolved(exercise.id, userCode)
       updateProgressDisplay()
-      elements.statusBar.textContent = 'All tests passed!'
+      elements.statusBar.textContent = '✔ All tests passed!'
       elements.statusBar.className = 'status-message success'
     } else if (result.error) {
-      elements.statusBar.textContent = result.error
+      elements.statusBar.textContent = `✘ Error: ${result.error}`
       elements.statusBar.className = 'status-message error'
     } else {
       const passCount = result.results.filter((r) => r.passed).length
-      elements.statusBar.textContent = `${passCount}/${result.results.length} tests passed`
+      elements.statusBar.textContent = `⚠ ${passCount}/${result.results.length} tests passed`
       elements.statusBar.className = 'status-message partial'
     }
   } catch (err) {
@@ -115,9 +115,11 @@ function renderResults(result) {
     el.className = `test-result ${r.passed ? 'pass' : 'fail'}`
 
     const icon = r.passed ? '✓' : '✗'
+    const verdict = r.passed ? 'PASS' : 'FAIL'
     const inputStr = JSON.stringify(r.input[0])
 
     let detail = `<span class="result-icon">${icon}</span>`
+    detail += `<span class="result-verdict">${verdict}</span>`
     detail += `<span class="result-label">Test ${i + 1}:</span>`
     detail += `<span class="result-input">isValid(${escapeHtml(inputStr)})</span>`
 

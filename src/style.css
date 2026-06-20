@@ -196,24 +196,27 @@ body {
 }
 
 .test-result.pass {
-  background: #4caf5011;
-  border-left: 3px solid var(--success);
+  background: #66bb6a18;
+  border-left: 4px solid var(--success);
 }
 
 .test-result.fail {
-  background: #ef535011;
-  border-left: 3px solid var(--error);
+  background: #ff6b6b0c;
+  border-left: 4px solid var(--error);
+  border-left-style: dashed;
 }
 
 .test-result.error {
-  background: #ef535011;
-  border-left: 3px solid var(--error);
+  background: #ff6b6b0c;
+  border-left: 4px solid var(--error);
+  border-left-style: dashed;
   color: var(--error);
 }
 
 .result-icon {
   font-weight: 800;
   min-width: 16px;
+  font-size: 1rem;
 }
 
 .test-result.pass .result-icon {
@@ -221,6 +224,25 @@ body {
 }
 
 .test-result.fail .result-icon {
+  color: var(--error);
+}
+
+.result-verdict {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 1px 6px;
+  border-radius: 3px;
+}
+
+.test-result.pass .result-verdict {
+  background: #66bb6a22;
+  color: var(--success);
+}
+
+.test-result.fail .result-verdict {
+  background: #ff6b6b22;
   color: var(--error);
 }
 
