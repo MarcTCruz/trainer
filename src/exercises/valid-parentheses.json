@@ -1,0 +1,28 @@
+{
+  "id": "valid-parentheses",
+  "title": "Valid Parentheses",
+  "difficulty": "Medium",
+  "description": "Given a string `s` containing just the characters `(`, `)`, `{`, `}`, `[` and `]`, determine if the input string is valid.\n\nA string is valid if:\n1. Open brackets are closed by the same type of brackets.\n2. Open brackets are closed in the correct order.\n3. Every close bracket has a corresponding open bracket of the same type.",
+  "functionName": "isValid",
+  "params": ["s"],
+  "starterCode": "function isValid(s) {\n  // Your solution here\n  \n}",
+  "testCases": [
+    { "input": ["()"], "expected": true },
+    { "input": ["()[]{}"], "expected": true },
+    { "input": ["(]"], "expected": false },
+    { "input": ["([)]"], "expected": false },
+    { "input": ["{[]}"], "expected": true },
+    { "input": [""], "expected": true },
+    { "input": ["("], "expected": false },
+    { "input": [")"], "expected": false },
+    { "input": ["((()))"], "expected": true },
+    { "input": ["{[()]}"], "expected": true },
+    { "input": ["{[(])}"], "expected": false },
+    { "input": ["{{{{"], "expected": false }
+  ],
+  "hints": [
+    "Think about what data structure naturally handles matching pairs in order.",
+    "A stack lets you track what was most recently opened and needs closing next.",
+    "When you see a closing bracket, the top of the stack must be its matching opener."
+  ]
+}
