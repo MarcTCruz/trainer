@@ -1,8 +1,26 @@
-import { EditorView, basicSetup } from 'codemirror'
-import { javascript } from '@codemirror/lang-javascript'
+import { EditorView, keymap } from '@codemirror/view'
+import {
+  lineNumbers,
+  highlightActiveLineGutter,
+  highlightActiveLine,
+  dropCursor,
+  rectangularSelection,
+  crosshairCursor,
+  highlightSpecialChars,
+} from '@codemirror/view'
 import { EditorState } from '@codemirror/state'
+import { history, defaultKeymap, historyKeymap } from '@codemirror/commands'
+import {
+  foldGutter,
+  indentOnInput,
+  bracketMatching,
+  syntaxHighlighting,
+  defaultHighlightStyle,
+  foldKeymap,
+} from '@codemirror/language'
+import { searchKeymap, highlightSelectionMatches } from '@codemirror/search'
+import { javascript } from '@codemirror/lang-javascript'
 import { oneDark, oneDarkHighlightStyle } from '@codemirror/theme-one-dark'
-import { syntaxHighlighting } from '@codemirror/language'
 
 const editorOverrides = EditorView.theme(
   {
@@ -28,14 +46,44 @@ const editorOverrides = EditorView.theme(
   { dark: true },
 )
 
+let formatCallback = null
+
+export function onFormat(cb) {
+  formatCallback = cb
+}
+
+const formatKeymap = keymap.of([
+  {
+    key: 'Shift-Alt-f',
+    run: () => {
+      if (formatCallback) formatCallback()
+      return true
+    },
+  },
+])
+
 export function createEditor(parentElement, initialCode) {
   const state = EditorState.create({
     doc: initialCode,
     extensions: [
-      basicSetup,
+      lineNumbers(),
+      highlightActiveLineGutter(),
+      highlightSpecialChars(),
+      history(),
+      foldGutter(),
+      dropCursor(),
+      EditorState.allowMultipleSelections.of(true),
+      indentOnInput(),
+      bracketMatching(),
+      rectangularSelection(),
+      crosshairCursor(),
+      highlightActiveLine(),
+      highlightSelectionMatches(),
+      keymap.of([...defaultKeymap, ...historyKeymap, ...foldKeymap, ...searchKeymap]),
       javascript(),
       oneDark,
       syntaxHighlighting(oneDarkHighlightStyle),
+      formatKeymap,
       editorOverrides,
     ],
   })

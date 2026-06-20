@@ -1,4 +1,4 @@
-import { createEditor, getCode, setCode } from './editor.js'
+import { createEditor, getCode, setCode, onFormat } from './editor.js'
 import { runExercise, ensureQuickJS } from './runner.js'
 import { markSolved, getProgress, getSavedCode } from './progress.js'
 import exercise from './exercises/valid-parentheses.json'
@@ -10,6 +10,7 @@ const elements = {
   editorContainer: document.getElementById('editor-container'),
   runButton: document.getElementById('run-button'),
   resetButton: document.getElementById('reset-button'),
+  formatButton: document.getElementById('format-button'),
   resultsContainer: document.getElementById('results-container'),
   statusBar: document.getElementById('status-message'),
   xpDisplay: document.getElementById('xp-value'),
@@ -173,9 +174,32 @@ function escapeHtml(str) {
   return div.innerHTML
 }
 
+async function handleFormat() {
+  const code = getCode(editor)
+  try {
+    const prettier = await import('prettier/standalone')
+    const parserBabel = await import('prettier/plugins/babel')
+    const parserEstree = await import('prettier/plugins/estree')
+    const formatted = await prettier.format(code, {
+      parser: 'babel',
+      plugins: [parserBabel.default, parserEstree.default],
+      semi: true,
+      singleQuote: true,
+      tabWidth: 2,
+      printWidth: 60,
+    })
+    setCode(editor, formatted.trimEnd())
+  } catch (err) {
+    elements.statusBar.textContent = `✘ Format error: ${err.message}`
+    elements.statusBar.className = 'status-message error'
+  }
+}
+
 elements.runButton.addEventListener('click', handleRun)
 elements.resetButton.addEventListener('click', handleReset)
+elements.formatButton.addEventListener('click', handleFormat)
 elements.hintButton.addEventListener('click', handleHint)
+onFormat(handleFormat)
 
 document.addEventListener('keydown', (e) => {
   if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
