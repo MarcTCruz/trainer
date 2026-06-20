@@ -1,12 +1,12 @@
 import { EditorView, basicSetup } from 'codemirror'
 import { javascript } from '@codemirror/lang-javascript'
 import { EditorState } from '@codemirror/state'
+import { oneDark, oneDarkHighlightStyle } from '@codemirror/theme-one-dark'
+import { syntaxHighlighting } from '@codemirror/language'
 
-const darkTheme = EditorView.theme(
+const editorOverrides = EditorView.theme(
   {
     '&': {
-      backgroundColor: '#1a1a2e',
-      color: '#e0e0e0',
       fontSize: '14px',
       borderRadius: '8px',
       border: '1px solid #3d3d60',
@@ -18,19 +18,10 @@ const darkTheme = EditorView.theme(
     '.cm-cursor': {
       borderLeftColor: '#64ffda',
     },
-    '&.cm-focused .cm-selectionBackground, .cm-selectionBackground': {
-      backgroundColor: '#2a2a4a',
-    },
     '.cm-gutters': {
-      backgroundColor: '#151528',
       color: '#8888a8',
-      border: 'none',
-    },
-    '.cm-activeLine': {
-      backgroundColor: '#1e1e3a',
     },
     '.cm-activeLineGutter': {
-      backgroundColor: '#1e1e3a',
       color: '#64ffda',
     },
   },
@@ -40,7 +31,13 @@ const darkTheme = EditorView.theme(
 export function createEditor(parentElement, initialCode) {
   const state = EditorState.create({
     doc: initialCode,
-    extensions: [basicSetup, javascript(), darkTheme],
+    extensions: [
+      basicSetup,
+      javascript(),
+      oneDark,
+      syntaxHighlighting(oneDarkHighlightStyle),
+      editorOverrides,
+    ],
   })
 
   return new EditorView({
