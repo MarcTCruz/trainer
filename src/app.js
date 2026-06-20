@@ -1,7 +1,13 @@
 import { createEditor, getCode, setCode, onFormat } from './editor.js'
 import { runExercise, ensureQuickJS } from './runner.js'
 import { markSolved, getProgress, getSavedCode } from './progress.js'
-import exercise from './exercises/valid-parentheses.json'
+import {
+  getExercise,
+  getNextVariant,
+  getVariantsOf,
+  getCluster,
+  getAllClusters,
+} from './exercise-loader.js'
 
 const elements = {
   title: document.getElementById('exercise-title'),
@@ -19,20 +25,59 @@ const elements = {
   hintButton: document.getElementById('hint-button'),
   hintContent: document.getElementById('hint-content'),
   wasmStatus: document.getElementById('wasm-status'),
+  stepper: document.getElementById('evolution-stepper'),
+  ribbon: document.getElementById('learning-ribbon'),
 }
 
 let editor
 let currentHintIndex = 0
+let currentExercise = null
 
-function initExercise() {
+function resolveStartExercise() {
+  const progress = getProgress()
+  const solved = progress.completedExercises
+  const allClusters = getAllClusters()
+  for (const cluster of allClusters) {
+    for (const entry of cluster.exercises) {
+      if (!solved[entry.id]) return entry.id
+    }
+  }
+  return allClusters[0]?.exercises[0]?.id ?? 'valid-parentheses'
+}
+
+function loadExercise(id, keepCode = false) {
+  const exercise = getExercise(id)
+  if (!exercise) return
+
+  currentExercise = exercise
+  currentHintIndex = 0
+
   elements.title.textContent = exercise.title
   elements.difficulty.textContent = exercise.difficulty
   elements.difficulty.dataset.level = exercise.difficulty.toLowerCase()
   elements.description.innerHTML = formatDescription(exercise.description)
 
-  const savedCode = getSavedCode(exercise.id)
-  editor = createEditor(elements.editorContainer, savedCode || exercise.starterCode)
+  if (!keepCode) {
+    const savedCode = getSavedCode(exercise.id)
+    if (editor) {
+      setCode(editor, savedCode || exercise.starterCode)
+    } else {
+      editor = createEditor(
+        elements.editorContainer,
+        savedCode || exercise.starterCode,
+      )
+    }
+  }
 
+  elements.resultsContainer.innerHTML = ''
+  elements.statusBar.textContent = ''
+  elements.statusBar.className = 'status-message'
+  elements.hintContent.textContent = ''
+  elements.hintContent.classList.remove('visible')
+  elements.hintButton.textContent = `Hint 1/${exercise.hints?.length ?? 0}`
+
+  renderStepper()
+  renderRibbon()
   updateProgressDisplay()
 }
 
@@ -53,7 +98,153 @@ function updateProgressDisplay() {
   const progress = getProgress()
   elements.xpDisplay.textContent = progress.xp
   elements.streakDisplay.textContent = progress.streak
-  elements.solvedDisplay.textContent = Object.keys(progress.completedExercises).length
+  elements.solvedDisplay.textContent = Object.keys(
+    progress.completedExercises,
+  ).length
+}
+
+function renderStepper() {
+  const container = elements.stepper
+  if (!container || !currentExercise) return
+
+  const baseId = currentExercise.variantOf || currentExercise.id
+  const family = getVariantsOf(baseId)
+  const progress = getProgress()
+  const solved = progress.completedExercises
+
+  container.innerHTML = ''
+
+  family.forEach((exercise, idx) => {
+    const isSolved = Boolean(solved[exercise.id])
+    const isActive = exercise.id === currentExercise.id
+    const isFirst = idx === 0
+    const prevSolved = idx === 0 || Boolean(solved[family[idx - 1].id])
+    const isLocked = !isFirst && !prevSolved && !isSolved && !isActive
+
+    if (idx > 0) {
+      const connector = document.createElement('div')
+      connector.className = `stepper-connector${isSolved ? ' solved' : ''}`
+      container.appendChild(connector)
+    }
+
+    const node = document.createElement('button')
+    node.className = `stepper-node${isSolved ? ' solved' : ''}${isActive ? ' active' : ''}`
+    node.type = 'button'
+
+    if (isLocked) {
+      node.setAttribute('aria-disabled', 'true')
+    } else {
+      node.setAttribute('aria-disabled', 'false')
+    }
+
+    if (isActive) {
+      node.setAttribute('aria-current', 'step')
+    }
+
+    const icon = document.createElement('span')
+    icon.className = 'node-icon'
+    icon.textContent = isSolved ? '✓' : isActive ? '●' : '○'
+    icon.setAttribute('aria-hidden', 'true')
+
+    const label = document.createElement('span')
+    label.textContent = exercise.title
+
+    node.appendChild(icon)
+    node.appendChild(label)
+
+    node.addEventListener('click', () => {
+      if (isLocked) return
+      if (exercise.id !== currentExercise.id) {
+        loadExercise(exercise.id, false)
+      }
+    })
+
+    container.appendChild(node)
+  })
+}
+
+function renderRibbon() {
+  const container = elements.ribbon
+  if (!container || !currentExercise) return
+
+  const clusters = getAllClusters()
+  const activeCluster = getCluster(currentExercise.id)
+  const progress = getProgress()
+  const solved = progress.completedExercises
+
+  container.innerHTML = ''
+
+  clusters.forEach((cluster) => {
+    const isActive = cluster.id === activeCluster?.id
+    const total = cluster.exercises.length
+    const solvedCount = cluster.exercises.filter((e) => Boolean(solved[e.id]))
+      .length
+    const progressPct = total > 0 ? (solvedCount / total) * 100 : 0
+
+    const pill = document.createElement('button')
+    pill.className = `ribbon-pill${isActive ? ' active' : ''}`
+    pill.type = 'button'
+    pill.textContent = cluster.title
+    pill.setAttribute('aria-pressed', String(isActive))
+
+    const bar = document.createElement('span')
+    bar.className = 'ribbon-progress'
+    bar.style.width = `${progressPct}%`
+    bar.setAttribute('aria-hidden', 'true')
+
+    pill.appendChild(bar)
+    container.appendChild(pill)
+  })
+}
+
+function showEvolutionPrompt(nextVariant) {
+  dismissEvolutionPrompt()
+
+  const card = document.createElement('div')
+  card.className = 'evolution-prompt'
+  card.id = 'evolution-prompt'
+  card.setAttribute('role', 'status')
+  card.setAttribute('aria-live', 'polite')
+
+  const heading = document.createElement('h3')
+  heading.textContent = 'Base concept mastered. Ready for the next level?'
+
+  const text = document.createElement('p')
+  text.textContent =
+    nextVariant.variantPrompt ||
+    `Next up: ${nextVariant.title}. Your code stays — only the challenge grows.`
+
+  const actions = document.createElement('div')
+  actions.className = 'prompt-actions'
+
+  const evolveBtn = document.createElement('button')
+  evolveBtn.className = 'btn btn-primary'
+  evolveBtn.type = 'button'
+  evolveBtn.textContent = `Evolve: ${nextVariant.title} →`
+  evolveBtn.addEventListener('click', () => {
+    dismissEvolutionPrompt()
+    loadExercise(nextVariant.id, true)
+  })
+
+  const stayBtn = document.createElement('button')
+  stayBtn.className = 'btn btn-secondary'
+  stayBtn.type = 'button'
+  stayBtn.textContent = 'Stay & Refactor'
+  stayBtn.addEventListener('click', dismissEvolutionPrompt)
+
+  actions.appendChild(evolveBtn)
+  actions.appendChild(stayBtn)
+
+  card.appendChild(heading)
+  card.appendChild(text)
+  card.appendChild(actions)
+
+  elements.resultsContainer.appendChild(card)
+}
+
+function dismissEvolutionPrompt() {
+  const existing = document.getElementById('evolution-prompt')
+  if (existing) existing.remove()
 }
 
 async function handleRun() {
@@ -71,16 +262,23 @@ async function handleRun() {
     elements.wasmStatus.textContent = 'Executing in sandbox...'
 
     const userCode = getCode(editor)
-    const result = await runExercise(userCode, exercise)
+    const result = await runExercise(userCode, currentExercise)
 
     elements.wasmStatus.classList.remove('visible')
     renderResults(result)
 
     if (result.allPassed) {
-      const state = markSolved(exercise.id, userCode)
+      markSolved(currentExercise.id, userCode)
       updateProgressDisplay()
+      renderStepper()
+      renderRibbon()
       elements.statusBar.textContent = '✔ All tests passed!'
       elements.statusBar.className = 'status-message success'
+
+      const nextVariant = getNextVariant(currentExercise.id)
+      if (nextVariant) {
+        showEvolutionPrompt(nextVariant)
+      }
     } else if (result.error) {
       elements.statusBar.textContent = `✘ Error: ${result.error}`
       elements.statusBar.className = 'status-message error'
@@ -111,18 +309,21 @@ function renderResults(result) {
     return
   }
 
+  const fnName = currentExercise.functionName
+  const paramNames = currentExercise.params ?? ['input']
+
   result.results.forEach((r, i) => {
     const el = document.createElement('div')
     el.className = `test-result ${r.passed ? 'pass' : 'fail'}`
 
     const icon = r.passed ? '✓' : '✗'
     const verdict = r.passed ? 'PASS' : 'FAIL'
-    const inputStr = JSON.stringify(r.input[0])
+    const args = r.input.map((v) => JSON.stringify(v)).join(', ')
 
     let detail = `<span class="result-icon">${icon}</span>`
     detail += `<span class="result-verdict">${verdict}</span>`
     detail += `<span class="result-label">Test ${i + 1}:</span>`
-    detail += `<span class="result-input">isValid(${escapeHtml(inputStr)})</span>`
+    detail += `<span class="result-input">${escapeHtml(fnName)}(${escapeHtml(args)})</span>`
 
     if (!r.passed) {
       if (r.error) {
@@ -139,25 +340,27 @@ function renderResults(result) {
 }
 
 function handleReset() {
-  setCode(editor, exercise.starterCode)
+  if (!currentExercise) return
+  setCode(editor, currentExercise.starterCode)
   elements.resultsContainer.innerHTML = ''
   elements.statusBar.textContent = ''
   elements.statusBar.className = 'status-message'
   currentHintIndex = 0
   elements.hintContent.textContent = ''
   elements.hintContent.classList.remove('visible')
+  elements.hintButton.textContent = `Hint 1/${currentExercise.hints?.length ?? 0}`
 }
 
 function handleHint() {
-  if (!exercise.hints || exercise.hints.length === 0) return
+  if (!currentExercise?.hints?.length) return
 
-  if (currentHintIndex < exercise.hints.length) {
-    elements.hintContent.textContent = exercise.hints[currentHintIndex]
+  if (currentHintIndex < currentExercise.hints.length) {
+    elements.hintContent.textContent = currentExercise.hints[currentHintIndex]
     elements.hintContent.classList.add('visible')
     currentHintIndex++
     elements.hintButton.textContent =
-      currentHintIndex < exercise.hints.length
-        ? `Hint ${currentHintIndex + 1}/${exercise.hints.length}`
+      currentHintIndex < currentExercise.hints.length
+        ? `Hint ${currentHintIndex + 1}/${currentExercise.hints.length}`
         : 'No more hints'
   }
 }
@@ -208,4 +411,4 @@ document.addEventListener('keydown', (e) => {
   }
 })
 
-initExercise()
+loadExercise(resolveStartExercise())

@@ -399,6 +399,166 @@ body {
   opacity: 1;
 }
 
+/* Learning Ribbon */
+.learning-ribbon {
+  display: flex;
+  gap: 8px;
+  padding: 8px 0;
+  overflow-x: auto;
+}
+
+.ribbon-pill {
+  padding: 6px 16px;
+  border-radius: 20px;
+  border: 1px solid var(--border);
+  background: none;
+  color: var(--text-secondary);
+  font-family: var(--font-sans);
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  position: relative;
+  overflow: hidden;
+  transition: border-color 0.15s, color 0.15s, background 0.15s;
+}
+
+.ribbon-pill:hover {
+  border-color: var(--text-secondary);
+  color: var(--text-primary);
+}
+
+.ribbon-pill.active {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: rgba(100, 255, 218, 0.08);
+}
+
+.ribbon-progress {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  height: 2px;
+  background: var(--accent);
+  transition: width 0.3s;
+}
+
+/* Evolution Stepper */
+.evolution-stepper {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  padding: 4px 0;
+}
+
+.stepper-node {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 10px;
+  border: none;
+  background: none;
+  color: var(--text-secondary);
+  font-family: var(--font-sans);
+  font-size: 0.8rem;
+  cursor: pointer;
+  border-radius: 6px;
+  transition: background 0.15s;
+  text-align: left;
+  width: 100%;
+}
+
+.stepper-node:hover:not([aria-disabled='true']) {
+  background: var(--bg-hover);
+}
+
+.stepper-node .node-icon {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.7rem;
+  font-weight: 800;
+  flex-shrink: 0;
+}
+
+.stepper-node.solved .node-icon {
+  background: var(--accent);
+  color: var(--bg-primary);
+}
+
+.stepper-node.active .node-icon {
+  border: 2px solid var(--accent);
+  color: var(--accent);
+  box-shadow: 0 0 8px rgba(100, 255, 218, 0.3);
+}
+
+.stepper-node.active {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.stepper-node[aria-disabled='true'] {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.stepper-node[aria-disabled='true'] .node-icon {
+  border: 1px dotted var(--border);
+}
+
+.stepper-connector {
+  width: 2px;
+  height: 12px;
+  background: var(--border);
+  margin-left: 19px;
+}
+
+.stepper-connector.solved {
+  background: var(--accent);
+}
+
+/* Evolution Prompt */
+.evolution-prompt {
+  background: var(--bg-card);
+  border: 1px solid var(--accent);
+  border-radius: 8px;
+  padding: 20px;
+  animation: slideUp 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  margin-top: 8px;
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.evolution-prompt h3 {
+  color: var(--accent);
+  font-size: 0.95rem;
+  margin-bottom: 8px;
+}
+
+.evolution-prompt p {
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+  margin-bottom: 16px;
+  line-height: 1.6;
+}
+
+.evolution-prompt .prompt-actions {
+  display: flex;
+  gap: 10px;
+}
+
 /* Footer */
 .footer {
   text-align: center;

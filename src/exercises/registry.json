@@ -1,0 +1,12 @@
+{
+  "clusters": [
+    {
+      "id": "stacks",
+      "title": "Stack Fundamentals",
+      "exercises": [
+        { "id": "valid-parentheses", "order": 1, "type": "base" },
+        { "id": "valid-parentheses-depth", "order": 2, "type": "variant", "prerequisites": ["valid-parentheses"] }
+      ]
+    }
+  ]
+}
