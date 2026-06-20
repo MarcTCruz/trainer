@@ -88,9 +88,10 @@ body {
 /* Main layout */
 .main {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 1fr 1.2fr;
   gap: 20px;
   min-height: 0;
+  align-items: start;
 }
 
 /* Exercise panel */
@@ -179,9 +180,9 @@ body {
 .results-section {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
   overflow-y: auto;
-  max-height: 300px;
+  max-height: 350px;
 }
 
 .test-result {

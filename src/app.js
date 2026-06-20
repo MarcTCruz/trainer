@@ -127,8 +127,8 @@ function renderResults(result) {
       if (r.error) {
         detail += `<span class="result-error">Error: ${escapeHtml(r.error)}</span>`
       } else {
-        detail += `<span class="result-expected">Expected: ${escapeHtml(JSON.stringify(r.expected))}</span>`
-        detail += `<span class="result-actual">Got: ${escapeHtml(JSON.stringify(r.actual))}</span>`
+        detail += `<span class="result-expected">Expected: ${escapeHtml(formatValue(r.expected))}</span>`
+        detail += `<span class="result-actual">Got: ${escapeHtml(formatValue(r.actual))}</span>`
       }
     }
 
@@ -159,6 +159,12 @@ function handleHint() {
         ? `Hint ${currentHintIndex + 1}/${exercise.hints.length}`
         : 'No more hints'
   }
+}
+
+function formatValue(val) {
+  if (val === undefined) return 'undefined'
+  if (val === null) return 'null'
+  return JSON.stringify(val)
 }
 
 function escapeHtml(str) {
