@@ -20,8 +20,50 @@ function save(state) {
   set(STORAGE_KEY, state);
 }
 
-function normalizeCode(code) {
-  return code.replace(/\s+/g, ' ').trim();
+export function normalizeCode(code) {
+  let result = '';
+  let inString = null;
+  let escaped = false;
+  let wsRun = false;
+
+  for (let i = 0; i < code.length; i++) {
+    const ch = code[i];
+
+    if (escaped) {
+      result += ch;
+      escaped = false;
+      continue;
+    }
+
+    if (ch === '\\' && inString) {
+      result += ch;
+      escaped = true;
+      continue;
+    }
+
+    if (inString) {
+      if (ch === inString) inString = null;
+      result += ch;
+      continue;
+    }
+
+    if (ch === '"' || ch === "'" || ch === '`') {
+      inString = ch;
+      result += ch;
+      wsRun = false;
+      continue;
+    }
+
+    if (/\s/.test(ch)) {
+      if (!wsRun) { result += ' '; wsRun = true; }
+      continue;
+    }
+
+    result += ch;
+    wsRun = false;
+  }
+
+  return result.trim();
 }
 
 export function markSolved(exerciseId, code) {

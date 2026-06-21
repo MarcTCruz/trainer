@@ -13,7 +13,7 @@ import { ensureRepo, pushSolution, pushProgress, syncOnLogin } from './github-sy
 import { ensureFork, pushSolutionToFork, fetchCIResults } from './ci-sync.js';
 import { initI18n, t, getLocale, setLocale, SUPPORTED_LOCALES } from './i18n.js';
 import { runExercise, ensureQuickJS } from './runner.js';
-import { markSolved, getProgress, getSavedCode } from './progress.js';
+import { markSolved, getProgress, getSavedCode, normalizeCode } from './progress.js';
 import {
   getExercise,
   getNextVariant,
@@ -599,8 +599,7 @@ function simpleHash(str) {
 
 function pushToCI(token, owner, exerciseId, code) {
   const pending = get(CI_PENDING_KEY) ?? {};
-  const normalized = code.replace(/\s+/g, ' ').trim();
-  const codeHash = simpleHash(normalized);
+  const codeHash = simpleHash(normalizeCode(code));
   if (pending[exerciseId] === codeHash) return;
 
   pending[exerciseId] = codeHash;
