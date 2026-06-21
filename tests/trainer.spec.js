@@ -1318,3 +1318,183 @@ test('repo creation attempted on first push when repo does not exist', async ({ 
   await repoCreatePromise;
   await solutionPutPromise;
 });
+
+// ---------------------------------------------------------------------------
+// CI sync flow
+// ---------------------------------------------------------------------------
+
+test('CI toggle shows privacy disclaimer when enabled', async ({ page }) => {
+  await mockGitHubSync(page);
+
+  // Mock fork check (the toggle triggers ensureFork)
+  await page.route('https://api.github.com/repos/testuser/refactory-validator', route =>
+    route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ name: 'refactory-validator' }) })
+  );
+
+  await page.goto('/');
+
+  // Sign in
+  await page.locator('#sign-in-button').click();
+  await page.locator('#token-input').fill('ghp_validtoken123');
+  await page.locator('#auth-connect-button').click();
+  await expect(page.locator('#auth-username')).toContainText('testuser', { timeout: 5000 });
+
+  // Toggle should be visible but unchecked
+  const toggle = page.locator('#ci-toggle');
+  await expect(toggle).toBeVisible();
+  await expect(toggle).not.toBeChecked();
+
+  // Disclaimer should be hidden
+  const disclaimer = page.locator('#ci-disclaimer');
+  await expect(disclaimer).toBeHidden();
+
+  // Enable CI
+  await toggle.check();
+
+  // Disclaimer should be visible
+  await expect(disclaimer).toBeVisible();
+  await expect(disclaimer).toContainText('public fork');
+});
+
+test('solving with CI enabled pushes solution to fork', async ({ page }) => {
+  await mockGitHubSync(page);
+
+  // Mock fork check
+  await page.route('https://api.github.com/repos/testuser/refactory-validator', route =>
+    route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ name: 'refactory-validator' }) })
+  );
+
+  // Mock fork contents API (solutions push)
+  await page.route('https://api.github.com/repos/testuser/refactory-validator/contents/**', route => {
+    if (route.request().method() === 'GET') {
+      return route.fulfill({ status: 404, contentType: 'application/json', body: JSON.stringify({ message: 'Not Found' }) });
+    }
+    if (route.request().method() === 'PUT') {
+      return route.fulfill({ status: 201, contentType: 'application/json', body: JSON.stringify({ content: { sha: 'fork-sha' } }) });
+    }
+    return route.continue();
+  });
+
+  // Mock CI results (no results yet)
+  await page.route('https://raw.githubusercontent.com/MarcTCruz/refactory-validator/main/results/**', route =>
+    route.fulfill({ status: 404 })
+  );
+
+  await page.goto('/');
+
+  // Sign in
+  await page.locator('#sign-in-button').click();
+  await page.locator('#token-input').fill('ghp_validtoken123');
+  await page.locator('#auth-connect-button').click();
+  await expect(page.locator('#auth-username')).toContainText('testuser', { timeout: 5000 });
+
+  // Enable CI
+  await page.locator('#ci-toggle').check();
+
+  // Set up watcher for fork push BEFORE solving
+  const forkPushPromise = page.waitForRequest(
+    req => req.url().includes('/repos/testuser/refactory-validator/contents/solutions/') && req.method() === 'PUT',
+    { timeout: 15000 }
+  );
+
+  // Solve the exercise
+  await pasteCode(page, CORRECT_SOLUTION);
+  await page.locator('#run-button').click();
+  await expect(page.locator('#status-message')).toContainText('All tests passed', { timeout: 15000 });
+
+  // Verify fork push was made
+  const forkPush = await forkPushPromise;
+  expect(forkPush.url()).toContain('valid-parentheses.js');
+});
+
+test('CI results display verification badges', async ({ page }) => {
+  await mockGitHubSync(page);
+
+  // Mock fork check
+  await page.route('https://api.github.com/repos/testuser/refactory-validator', route =>
+    route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ name: 'refactory-validator' }) })
+  );
+
+  const ciResults = {
+    user: 'testuser',
+    verified_at: '2026-06-21T08:45:00Z',
+    exercises: {
+      'valid-parentheses': { status: 'pass', verified_at: '2026-06-21T08:45:00Z' }
+    }
+  };
+
+  await page.goto('/');
+
+  // Sign in — this stores token + user in IndexedDB
+  await page.locator('#sign-in-button').click();
+  await page.locator('#token-input').fill('ghp_validtoken123');
+  await page.locator('#auth-connect-button').click();
+  await expect(page.locator('#auth-username')).toContainText('testuser', { timeout: 5000 });
+
+  // Enable CI toggle (persists trainer_ci_enabled to IndexedDB)
+  await page.locator('#ci-toggle').check();
+
+  // Write CI results directly into IndexedDB so boot finds them immediately on reload
+  await page.evaluate(results => {
+    return new Promise((resolve, reject) => {
+      const req = indexedDB.open('trainer-db', 1);
+      req.onsuccess = () => {
+        const tx = req.result.transaction('kv', 'readwrite');
+        tx.objectStore('kv').put(results, 'trainer_ci_results');
+        tx.oncomplete = resolve;
+        tx.onerror = () => reject(tx.error);
+      };
+      req.onerror = () => reject(req.error);
+    });
+  }, ciResults);
+
+  // Reload — boot() reads CI results from IndexedDB before loadExercise renders the badge
+  await page.reload();
+
+  // Auth state should restore from persisted token
+  await expect(page.locator('#auth-username')).toContainText('testuser', { timeout: 5000 });
+
+  // Badge should be visible because CI results were pre-seeded before boot
+  await expect(page.locator('.ci-badge-pass')).toBeVisible({ timeout: 5000 });
+  await expect(page.locator('.ci-badge-pass')).toContainText('CI Verified');
+});
+
+test('CI sync errors do not break solving', async ({ page }) => {
+  await mockGitHubSync(page);
+
+  // Mock fork check — 500 error
+  await page.route('https://api.github.com/repos/testuser/refactory-validator', route =>
+    route.fulfill({ status: 500, contentType: 'application/json', body: JSON.stringify({ message: 'Internal Server Error' }) })
+  );
+
+  // Mock fork creation — 500 error
+  await page.route('https://api.github.com/repos/MarcTCruz/refactory-validator/forks', route =>
+    route.fulfill({ status: 500, contentType: 'application/json', body: JSON.stringify({ message: 'Internal Server Error' }) })
+  );
+
+  // Mock CI results — 500 error
+  await page.route('https://raw.githubusercontent.com/MarcTCruz/refactory-validator/main/results/**', route =>
+    route.fulfill({ status: 500 })
+  );
+
+  await page.goto('/');
+
+  // Sign in
+  await page.locator('#sign-in-button').click();
+  await page.locator('#token-input').fill('ghp_validtoken123');
+  await page.locator('#auth-connect-button').click();
+  await expect(page.locator('#auth-username')).toContainText('testuser', { timeout: 5000 });
+
+  // Enable CI (will try to ensureFork, which will fail silently)
+  await page.locator('#ci-toggle').check();
+
+  // Solve the exercise — CI sync will fail silently but solve still works
+  await pasteCode(page, CORRECT_SOLUTION);
+  await page.locator('#run-button').click();
+
+  // App still reports success
+  await expect(page.locator('#status-message')).toContainText('All tests passed', { timeout: 15000 });
+
+  // Progress still updated locally
+  await expect(page.locator('#solved-value')).not.toHaveText('0', { timeout: 5000 });
+});
