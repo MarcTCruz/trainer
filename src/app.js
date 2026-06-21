@@ -11,6 +11,7 @@ import {
 } from './github-auth.js';
 import { ensureRepo, pushSolution, pushProgress, syncOnLogin } from './github-sync.js';
 import { ensureFork, pushSolutionToFork, fetchCIResults } from './ci-sync.js';
+import { initI18n, t, getLocale, setLocale, SUPPORTED_LOCALES } from './i18n.js';
 import { runExercise, ensureQuickJS } from './runner.js';
 import { markSolved, getProgress, getSavedCode } from './progress.js';
 import {
@@ -743,6 +744,7 @@ document.addEventListener('keydown', (e) => {
 
 async function boot() {
   await initStorage();
+  await initI18n();
   loadExercise(resolveStartExercise());
   renderAuthState();
   if (isAuthenticated()) {
