@@ -1,3 +1,5 @@
+import { t } from './i18n.js'
+
 const TIMEOUT_MS = 5000
 const MAX_MEMORY_BYTES = 1024 * 1024 * 10
 
@@ -65,7 +67,7 @@ export async function runExercise(userCode, exercise) {
     vm.dispose()
     return {
       allPassed: false,
-      error: `Function "${exercise.functionName}" is not defined.`,
+      error: t('runner.fnNotDefined', { functionName: exercise.functionName }),
       results: [],
     }
   }
@@ -76,7 +78,7 @@ export async function runExercise(userCode, exercise) {
     vm.dispose()
     return {
       allPassed: false,
-      error: `"${exercise.functionName}" is not a function (got ${fnType}).`,
+      error: t('runner.notAFunction', { name: exercise.functionName, type: fnType }),
       results: [],
     }
   }

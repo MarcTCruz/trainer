@@ -95,11 +95,11 @@ function loadExercise(id, keepCode = false) {
   const progress = getProgress();
 
   const badgeConfig = ciStatus?.status === 'pass'
-    ? { cls: 'ci-badge-pass', text: '✓ CI Verified' }
+    ? { cls: 'ci-badge-pass', text: t('ci.badgePass') }
     : ciStatus?.status === 'fail'
-    ? { cls: 'ci-badge-fail', text: '✗ CI Failed' }
+    ? { cls: 'ci-badge-fail', text: t('ci.badgeFail') }
     : (!ciStatus && progress.completedExercises[exercise.id])
-    ? { cls: 'ci-badge-local', text: '✓ Local' }
+    ? { cls: 'ci-badge-local', text: t('ci.badgeLocal') }
     : null;
 
   if (badgeConfig) {
@@ -123,7 +123,7 @@ function loadExercise(id, keepCode = false) {
   elements.statusBar.className = 'status-message';
   elements.hintContent.textContent = '';
   elements.hintContent.classList.remove('visible');
-  elements.hintButton.textContent = `Hint 1/${exercise.hints?.length ?? 0}`;
+  elements.hintButton.textContent = t('hint.button', { current: 1, total: exercise.hints?.length ?? 0 });
 
   renderStepper();
   renderRibbon();
@@ -261,12 +261,12 @@ function showEvolutionPrompt(nextVariant, forwardResult) {
   card.setAttribute('aria-live', 'polite');
 
   const heading = document.createElement('h3');
-  heading.textContent = 'Base concept mastered. Ready for the next level?';
+  heading.textContent = t('evolution.heading');
 
   const text = document.createElement('p');
   text.textContent =
     nextVariant.variantPrompt ||
-    `Next up: ${nextVariant.title}. Your code stays — only the challenge grows.`;
+    t('evolution.prompt', { title: nextVariant.title });
 
   card.appendChild(heading);
   card.appendChild(text);
@@ -278,7 +278,7 @@ function showEvolutionPrompt(nextVariant, forwardResult) {
       const indicator = document.createElement('p');
       indicator.className = 'forward-test-indicator';
       indicator.id = 'forward-test-indicator';
-      indicator.textContent = `Your current solution already passes ${passCount}/${totalCount} of the next challenge's tests.`;
+      indicator.textContent = t('evolution.forwardIndicator', { passCount, totalCount });
       card.appendChild(indicator);
     }
   }
@@ -289,7 +289,7 @@ function showEvolutionPrompt(nextVariant, forwardResult) {
   const evolveBtn = document.createElement('button');
   evolveBtn.className = 'btn btn-primary';
   evolveBtn.type = 'button';
-  evolveBtn.textContent = `Evolve: ${nextVariant.title} →`;
+  evolveBtn.textContent = t('evolution.evolve', { title: nextVariant.title });
   evolveBtn.addEventListener('click', () => {
     dismissEvolutionPrompt();
     loadExercise(nextVariant.id, true);
@@ -298,7 +298,7 @@ function showEvolutionPrompt(nextVariant, forwardResult) {
   const stayBtn = document.createElement('button');
   stayBtn.className = 'btn btn-secondary';
   stayBtn.type = 'button';
-  stayBtn.textContent = 'Stay & Refactor';
+  stayBtn.textContent = t('evolution.stay');
   stayBtn.addEventListener('click', dismissEvolutionPrompt);
 
   actions.appendChild(evolveBtn);
@@ -316,17 +316,17 @@ function dismissEvolutionPrompt() {
 
 async function handleRun() {
   elements.runButton.disabled = true;
-  elements.runButton.textContent = 'Running...';
+  elements.runButton.textContent = t('run.running');
   elements.resultsContainer.innerHTML = '';
   elements.statusBar.textContent = '';
   elements.statusBar.className = 'status-message';
 
-  elements.wasmStatus.textContent = 'Loading WASM sandbox...';
+  elements.wasmStatus.textContent = t('run.loadingWasm');
   elements.wasmStatus.classList.add('visible');
 
   try {
     await ensureQuickJS();
-    elements.wasmStatus.textContent = 'Executing in sandbox...';
+    elements.wasmStatus.textContent = t('run.executing');
 
     const userCode = getCode(editor);
     const result = await runExercise(userCode, currentExercise);
@@ -356,7 +356,7 @@ async function handleRun() {
       updateProgressDisplay();
       renderStepper();
       renderRibbon();
-      elements.statusBar.textContent = '✔ All tests passed!';
+      elements.statusBar.textContent = t('run.allPassed');
       elements.statusBar.className = 'status-message success';
 
       const nextVariant = getNextVariant(currentExercise.id);
@@ -375,20 +375,20 @@ async function handleRun() {
         showEvolutionPrompt(nextVariant, forwardResult);
       }
     } else if (result.error) {
-      elements.statusBar.textContent = `✘ Error: ${result.error}`;
+      elements.statusBar.textContent = t('run.error', { error: result.error });
       elements.statusBar.className = 'status-message error';
     } else {
       const passCount = result.results.filter((r) => r.passed).length;
-      elements.statusBar.textContent = `⚠ ${passCount}/${result.results.length} tests passed`;
+      elements.statusBar.textContent = t('run.partial', { passCount, totalCount: result.results.length });
       elements.statusBar.className = 'status-message partial';
     }
   } catch (err) {
     elements.wasmStatus.classList.remove('visible');
-    elements.statusBar.textContent = `Runner error: ${err.message}`;
+    elements.statusBar.textContent = t('run.runnerError', { message: err.message });
     elements.statusBar.className = 'status-message error';
   } finally {
     elements.runButton.disabled = false;
-    elements.runButton.textContent = 'Run Code';
+    elements.runButton.textContent = t('run.runCode');
   }
 }
 
@@ -412,20 +412,20 @@ function renderResults(result) {
     el.className = `test-result ${r.passed ? 'pass' : 'fail'}`;
 
     const icon = r.passed ? '✓' : '✗';
-    const verdict = r.passed ? 'PASS' : 'FAIL';
+    const verdict = r.passed ? t('test.pass') : t('test.fail');
     const args = r.input.map((v) => JSON.stringify(v)).join(', ');
 
     let detail = `<span class="result-icon">${icon}</span>`;
     detail += `<span class="result-verdict">${verdict}</span>`;
-    detail += `<span class="result-label">Test ${i + 1}:</span>`;
+    detail += `<span class="result-label">${t('test.label', { index: i + 1 })}</span>`;
     detail += `<span class="result-input">${escapeHtml(fnName)}(${escapeHtml(args)})</span>`;
 
     if (!r.passed) {
       if (r.error) {
-        detail += `<span class="result-error">Error: ${escapeHtml(r.error)}</span>`;
+        detail += `<span class="result-error">${t('test.errorPrefix', { error: escapeHtml(r.error) })}</span>`;
       } else {
-        detail += `<span class="result-expected">Expected: ${escapeHtml(formatValue(r.expected))}</span>`;
-        detail += `<span class="result-actual">Got: ${escapeHtml(formatValue(r.actual))}</span>`;
+        detail += `<span class="result-expected">${t('test.expected', { value: escapeHtml(formatValue(r.expected)) })}</span>`;
+        detail += `<span class="result-actual">${t('test.got', { value: escapeHtml(formatValue(r.actual)) })}</span>`;
       }
     }
 
@@ -471,7 +471,7 @@ function renderAuthState() {
       signOut.className = 'btn btn-ghost';
       signOut.id = 'sign-out-button';
       signOut.type = 'button';
-      signOut.textContent = 'Sign out';
+      signOut.textContent = t('auth.signOut');
       signOut.addEventListener('click', handleSignOut);
 
       container.appendChild(avatar);
@@ -492,7 +492,7 @@ function renderAuthState() {
       ciCheckbox.checked = Boolean(get(CI_ENABLED_KEY));
 
       const ciText = document.createElement('span');
-      ciText.textContent = 'CI Verification';
+      ciText.textContent = t('ci.toggle');
 
       ciLabel.appendChild(ciCheckbox);
       ciLabel.appendChild(ciText);
@@ -501,7 +501,7 @@ function renderAuthState() {
       const ciDisclaimer = document.createElement('p');
       ciDisclaimer.className = 'ci-disclaimer';
       ciDisclaimer.id = 'ci-disclaimer';
-      ciDisclaimer.textContent = 'Solutions will be visible on your public fork.';
+      ciDisclaimer.textContent = t('ci.disclaimer');
       ciDisclaimer.style.display = get(CI_ENABLED_KEY) ? 'block' : 'none';
       ciSection.appendChild(ciDisclaimer);
 
@@ -514,7 +514,7 @@ function renderAuthState() {
     signIn.className = 'btn btn-ghost';
     signIn.id = 'sign-in-button';
     signIn.type = 'button';
-    signIn.textContent = 'Sign in';
+    signIn.textContent = t('auth.signIn');
     signIn.addEventListener('click', openAuthModal);
     section.appendChild(signIn);
   }
@@ -523,12 +523,12 @@ function renderAuthState() {
 async function handleConnect() {
   const token = elements.tokenInput.value.trim();
   if (!token) {
-    elements.authError.textContent = 'Please paste your token.';
+    elements.authError.textContent = t('auth.emptyToken');
     return;
   }
 
   elements.authConnectButton.disabled = true;
-  elements.authConnectButton.textContent = 'Connecting...';
+  elements.authConnectButton.textContent = t('auth.connecting');
   elements.authError.textContent = '';
 
   try {
@@ -548,10 +548,10 @@ async function handleConnect() {
       }
     }
   } catch {
-    elements.authError.textContent = 'Invalid token — check that you copied the full string.';
+    elements.authError.textContent = t('auth.invalidToken');
   } finally {
     elements.authConnectButton.disabled = false;
-    elements.authConnectButton.textContent = 'Connect';
+    elements.authConnectButton.textContent = t('auth.connect');
   }
 }
 
@@ -668,7 +668,7 @@ function handleReset() {
   currentHintIndex = 0;
   elements.hintContent.textContent = '';
   elements.hintContent.classList.remove('visible');
-  elements.hintButton.textContent = `Hint 1/${currentExercise.hints?.length ?? 0}`;
+  elements.hintButton.textContent = t('hint.button', { current: 1, total: currentExercise.hints?.length ?? 0 });
 }
 
 function handleHint() {
@@ -680,8 +680,8 @@ function handleHint() {
     currentHintIndex++;
     elements.hintButton.textContent =
       currentHintIndex < currentExercise.hints.length
-        ? `Hint ${currentHintIndex + 1}/${currentExercise.hints.length}`
-        : 'No more hints';
+        ? t('hint.button', { current: currentHintIndex + 1, total: currentExercise.hints.length })
+        : t('hint.noMore');
   }
 }
 
@@ -713,7 +713,7 @@ async function handleFormat() {
     });
     setCode(editor, formatted.trimEnd());
   } catch (err) {
-    elements.statusBar.textContent = `✘ Format error: ${err.message}`;
+    elements.statusBar.textContent = t('run.formatError', { message: err.message });
     elements.statusBar.className = 'status-message error';
   }
 }
@@ -742,9 +742,35 @@ document.addEventListener('keydown', (e) => {
   }
 });
 
+function applyI18nToDOM() {
+  document.title = t('app.pageTitle');
+  document.querySelector('header h1').textContent = t('app.title');
+  elements.browseButton.textContent = t('nav.browse');
+  elements.browseButton.setAttribute('aria-label', t('nav.browseLabel'));
+  document.querySelector('.sidebar-header h2').textContent = t('nav.exercises');
+  elements.sidebarClose.setAttribute('aria-label', t('nav.closeSidebar'));
+  document.querySelector('.auth-modal-header h2').textContent = t('auth.signInTitle');
+  elements.authModalClose.setAttribute('aria-label', t('auth.close'));
+  document.querySelector('.auth-modal-text').textContent = t('auth.tokenPrompt');
+  document.querySelector('.auth-github-link').textContent = t('auth.createToken');
+  document.querySelector('.auth-label').textContent = t('auth.pasteToken');
+  elements.tokenInput.placeholder = t('auth.tokenPlaceholder');
+  elements.authConnectButton.textContent = t('auth.connect');
+  elements.authCancelButton.textContent = t('auth.cancel');
+  document.querySelector('.footer').textContent = t('app.footer');
+
+  const statLabels = document.querySelectorAll('.stat-label');
+  const labelKeys = ['stats.xp', 'stats.streak', 'stats.solved'];
+  statLabels.forEach((el, i) => { if (labelKeys[i]) el.textContent = t(labelKeys[i]); });
+
+  elements.stepper.setAttribute('aria-label', t('nav.exerciseProgression'));
+  elements.ribbon.setAttribute('aria-label', t('nav.conceptClusters'));
+}
+
 async function boot() {
   await initStorage();
   await initI18n();
+  applyI18nToDOM();
   loadExercise(resolveStartExercise());
   renderAuthState();
   if (isAuthenticated()) {
