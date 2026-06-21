@@ -56,5 +56,6 @@
   "evolution.evolve": "Evoluir: {title} →",
   "evolution.stay": "Ficar e Refatorar",
   "runner.fnNotDefined": "A função \"{functionName}\" não está definida.",
-  "runner.notAFunction": "\"{name}\" não é uma função (tipo: {type})."
+  "runner.notAFunction": "\"{name}\" não é uma função (tipo: {type}).",
+  "app.offline": "Você está offline. As alterações serão sincronizadas ao reconectar."
 }

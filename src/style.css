@@ -998,3 +998,13 @@ body {
   background: var(--accent-dim);
   color: var(--accent);
 }
+
+.offline-banner {
+  background: var(--warning);
+  color: #0a0a1a;
+  text-align: center;
+  padding: 6px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  font-family: var(--font-sans);
+}

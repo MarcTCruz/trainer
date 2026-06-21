@@ -742,6 +742,18 @@ document.addEventListener('keydown', (e) => {
   }
 });
 
+function setupOfflineIndicator() {
+  const banner = document.createElement('div');
+  banner.className = 'offline-banner';
+  banner.id = 'offline-banner';
+  banner.textContent = t('app.offline');
+  banner.style.display = navigator.onLine ? 'none' : 'block';
+  document.body.prepend(banner);
+
+  window.addEventListener('online', () => { banner.style.display = 'none'; });
+  window.addEventListener('offline', () => { banner.style.display = 'block'; });
+}
+
 function applyI18nToDOM() {
   document.title = t('app.pageTitle');
   document.querySelector('header h1').textContent = t('app.title');
@@ -803,6 +815,7 @@ async function boot() {
   await initStorage();
   await initI18n();
   applyI18nToDOM();
+  setupOfflineIndicator();
   loadExercise(resolveStartExercise());
   renderAuthState();
   if (isAuthenticated()) {

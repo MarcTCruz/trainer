@@ -56,5 +56,6 @@
   "evolution.evolve": "Evolve: {title} →",
   "evolution.stay": "Stay & Refactor",
   "runner.fnNotDefined": "Function \"{functionName}\" is not defined.",
-  "runner.notAFunction": "\"{name}\" is not a function (got {type})."
+  "runner.notAFunction": "\"{name}\" is not a function (got {type}).",
+  "app.offline": "You are offline. Changes will sync when reconnected."
 }
