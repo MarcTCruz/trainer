@@ -1,4 +1,4 @@
-import { init as initStorage } from './storage.js';
+import { init as initStorage, get, set } from './storage.js';
 import { createEditor, getCode, setCode, onFormat } from './editor.js';
 import {
   saveToken,
@@ -10,6 +10,7 @@ import {
   GITHUB_TOKEN_URL
 } from './github-auth.js';
 import { ensureRepo, pushSolution, pushProgress, syncOnLogin } from './github-sync.js';
+import { ensureFork, pushSolutionToFork, fetchCIResults } from './ci-sync.js';
 import { runExercise, ensureQuickJS } from './runner.js';
 import { markSolved, getProgress, getSavedCode } from './progress.js';
 import {
@@ -19,6 +20,9 @@ import {
   getCluster,
   getAllClusters
 } from './exercise-loader.js';
+
+const CI_ENABLED_KEY = 'trainer_ci_enabled';
+const CI_RESULTS_KEY = 'trainer_ci_results';
 
 const elements = {
   title: document.getElementById('exercise-title'),
@@ -319,6 +323,11 @@ async function handleRun() {
               pushProgress(token, user.login, getProgress())
             ]))
             .catch(err => console.warn('Sync failed:', err.message));
+          if (get(CI_ENABLED_KEY)) {
+            ensureFork(token, user.login)
+              .then(() => pushSolutionToFork(token, user.login, currentExercise.id, userCode))
+              .catch(err => console.warn('CI sync failed:', err.message));
+          }
         }
       }
       updateProgressDisplay();
@@ -479,6 +488,11 @@ async function handleConnect() {
       syncOnLogin(getToken(), user.login)
         .then(() => updateProgressDisplay())
         .catch(err => console.warn('Sync on login failed:', err.message));
+      if (get(CI_ENABLED_KEY)) {
+        fetchCIResults(user.login)
+          .then(results => { if (results) set(CI_RESULTS_KEY, results); })
+          .catch(err => console.warn('CI results fetch failed:', err.message));
+      }
     }
   } catch {
     elements.authError.textContent = 'Invalid token — check that you copied the full string.';
@@ -678,6 +692,11 @@ async function boot() {
           renderRibbon();
         })
         .catch(err => console.warn('Sync on boot failed:', err.message));
+      if (get(CI_ENABLED_KEY)) {
+        fetchCIResults(user.login)
+          .then(results => { if (results) set(CI_RESULTS_KEY, results); })
+          .catch(err => console.warn('CI results fetch failed:', err.message));
+      }
     }
   }
 }
