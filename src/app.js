@@ -924,7 +924,8 @@ function applyI18nToDOM() {
   elements.tokenInput.placeholder = t('auth.tokenPlaceholder');
   elements.authConnectButton.textContent = t('auth.connect');
   elements.authCancelButton.textContent = t('auth.cancel');
-  document.querySelector('.footer').textContent = t('app.footer');
+  document.querySelector('#footer-quote').textContent = `“${t('app.quote')}”`;
+  document.querySelector('.footer p:last-child').textContent = t('app.footer');
 
   elements.runButton.textContent = t('run.runCode');
   elements.resetButton.textContent = t('run.reset');
