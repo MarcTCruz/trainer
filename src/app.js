@@ -765,6 +765,34 @@ function applyI18nToDOM() {
 
   elements.stepper.setAttribute('aria-label', t('nav.exerciseProgression'));
   elements.ribbon.setAttribute('aria-label', t('nav.conceptClusters'));
+
+  renderLocaleSelector();
+}
+
+function renderLocaleSelector() {
+  const existing = document.getElementById('locale-selector');
+  if (existing) existing.remove();
+
+  const container = document.createElement('div');
+  container.className = 'locale-selector';
+  container.id = 'locale-selector';
+
+  SUPPORTED_LOCALES.forEach((locale) => {
+    const btn = document.createElement('button');
+    btn.className = 'locale-btn';
+    btn.type = 'button';
+    btn.textContent = locale;
+    if (locale === getLocale()) btn.classList.add('active');
+    btn.addEventListener('click', async () => {
+      await setLocale(locale);
+      applyI18nToDOM();
+      loadExercise(currentExercise?.id ?? resolveStartExercise(), true);
+      renderAuthState();
+    });
+    container.appendChild(btn);
+  });
+
+  document.querySelector('.header').appendChild(container);
 }
 
 async function boot() {
