@@ -1,0 +1,26 @@
+{
+  "id": "stock-span",
+  "variantOf": "daily-temperatures",
+  "variantOrder": 2,
+  "variantPrompt": "Your Daily Temperatures solution scans forward for the next greater element. Stock Span reverses the direction — can you adapt your monotonic stack to look backward?",
+  "title": "Stock Span",
+  "difficulty": "Medium",
+  "description": "The **stock span** for a given day is the maximum number of consecutive days just before (and including) the current day where the price was less than or equal to the current day's price.\n\nGiven an array of stock prices, return the span for each day.\n\n**Example:**\n```\nprices = [100, 80, 60, 70, 60, 75, 85]\nResult = [1, 1, 1, 2, 1, 4, 6]\n```",
+  "functionName": "stockSpan",
+  "params": ["prices"],
+  "starterCode": "function stockSpan(prices) {\n  // Your solution here\n  \n}",
+  "testCases": [
+    { "input": [[100, 80, 60, 70, 60, 75, 85]], "expected": [1, 1, 1, 2, 1, 4, 6] },
+    { "input": [[10, 20, 30, 40]], "expected": [1, 2, 3, 4] },
+    { "input": [[40, 30, 20, 10]], "expected": [1, 1, 1, 1] },
+    { "input": [[50]], "expected": [1] },
+    { "input": [[30, 30, 30]], "expected": [1, 2, 3] },
+    { "input": [[10, 4, 5, 90, 120, 80]], "expected": [1, 1, 2, 4, 5, 1] },
+    { "input": [[31, 27, 28, 21, 24, 30, 35]], "expected": [1, 1, 2, 1, 2, 5, 7] }
+  ],
+  "hints": [
+    "The span for day i is: how far back can you go from i where every price is ≤ prices[i]? Think of it as the backward version of Daily Temperatures.",
+    "Use a stack of indices. For each day, pop all indices whose prices are ≤ the current price.",
+    "The span is: current index minus the index at the top of the stack (after popping). If the stack is empty, span = i + 1."
+  ]
+}

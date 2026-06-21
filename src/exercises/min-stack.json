@@ -1,0 +1,88 @@
+{
+  "id": "min-stack",
+  "variantOf": null,
+  "variantOrder": 1,
+  "variantPrompt": null,
+  "title": "Min Stack",
+  "difficulty": "Medium",
+  "description": "Design a stack that supports `push`, `pop`, `top`, and retrieving the minimum element in **O(1)** time.\n\nImplement `minStack(operations, values)` that processes a sequence of operations:\n- `\"MinStack\"` — initialize the stack\n- `\"push\"` — push a value onto the stack\n- `\"pop\"` — remove the top element\n- `\"top\"` — return the top element\n- `\"getMin\"` — return the minimum element\n\nReturn an array of results for each operation (`null` for `MinStack`, `push`, and `pop`).\n\n**Example:**\n```\noperations = [\"MinStack\", \"push\", \"push\", \"push\", \"getMin\", \"pop\", \"top\", \"getMin\"]\nvalues     = [[], [-2], [0], [-3], [], [], [], []]\nResult     = [null, null, null, null, -3, null, 0, -2]\n```",
+  "functionName": "minStack",
+  "params": ["operations", "values"],
+  "starterCode": "function minStack(operations, values) {\n  // Your solution here\n  \n}",
+  "testCases": [
+    {
+      "input": [
+        ["MinStack", "push", "push", "push", "getMin", "pop", "top", "getMin"],
+        [[], [-2], [0], [-3], [], [], [], []]
+      ],
+      "expected": [null, null, null, null, -3, null, 0, -2]
+    },
+    {
+      "input": [
+        ["MinStack", "push", "getMin", "push", "getMin"],
+        [[], [5], [], [3], []]
+      ],
+      "expected": [null, null, 5, null, 3]
+    },
+    {
+      "input": [
+        ["MinStack", "push", "push", "push", "pop", "getMin"],
+        [[], [2], [1], [3], [], []]
+      ],
+      "expected": [null, null, null, null, null, 1]
+    },
+    {
+      "input": [
+        ["MinStack", "push", "getMin", "top"],
+        [[], [42], [], []]
+      ],
+      "expected": [null, null, 42, 42]
+    },
+    {
+      "input": [
+        ["MinStack", "push", "push", "getMin", "pop", "getMin"],
+        [[], [1], [1], [], [], []]
+      ],
+      "expected": [null, null, null, 1, null, 1]
+    },
+    {
+      "input": [
+        [
+          "MinStack",
+          "push",
+          "push",
+          "push",
+          "push",
+          "getMin",
+          "pop",
+          "getMin",
+          "pop",
+          "getMin",
+          "pop",
+          "getMin"
+        ],
+        [[], [3], [2], [1], [0], [], [], [], [], [], [], []]
+      ],
+      "expected": [null, null, null, null, null, 0, null, 1, null, 2, null, 3]
+    },
+    {
+      "input": [
+        ["MinStack", "push", "push", "push", "getMin", "pop", "getMin", "pop", "getMin"],
+        [[], [-1], [-2], [-3], [], [], [], [], []]
+      ],
+      "expected": [null, null, null, null, -3, null, -2, null, -1]
+    },
+    {
+      "input": [
+        ["MinStack", "push", "push", "getMin", "push", "getMin", "pop", "getMin"],
+        [[], [0], [1], [], [-1], [], [], []]
+      ],
+      "expected": [null, null, null, 0, null, -1, null, 0]
+    }
+  ],
+  "hints": [
+    "A regular stack gives you push, pop, and top. The challenge is getMin in O(1). What if you tracked the minimum at each level?",
+    "Consider maintaining a second stack that records the minimum value at each depth of the main stack.",
+    "When you push, also push onto the min stack: min(new value, current min). When you pop, pop from both stacks."
+  ]
+}

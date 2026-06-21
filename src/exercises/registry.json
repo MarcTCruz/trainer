@@ -5,7 +5,36 @@
       "title": "Stack Fundamentals",
       "exercises": [
         { "id": "valid-parentheses", "order": 1, "type": "base" },
-        { "id": "valid-parentheses-depth", "order": 2, "type": "variant", "prerequisites": ["valid-parentheses"] }
+        {
+          "id": "valid-parentheses-depth",
+          "order": 2,
+          "type": "variant",
+          "prerequisites": ["valid-parentheses"]
+        },
+        { "id": "min-stack", "order": 3, "type": "base" },
+        { "id": "min-max-stack", "order": 4, "type": "variant", "prerequisites": ["min-stack"] },
+        { "id": "evaluate-rpn", "order": 5, "type": "base" },
+        {
+          "id": "evaluate-rpn-extended",
+          "order": 6,
+          "type": "variant",
+          "prerequisites": ["evaluate-rpn"]
+        },
+        { "id": "daily-temperatures", "order": 7, "type": "base" },
+        {
+          "id": "stock-span",
+          "order": 8,
+          "type": "variant",
+          "prerequisites": ["daily-temperatures"]
+        }
+      ]
+    },
+    {
+      "id": "arrays",
+      "title": "Array Patterns",
+      "exercises": [
+        { "id": "two-sum", "order": 1, "type": "base" },
+        { "id": "three-sum", "order": 2, "type": "variant", "prerequisites": ["two-sum"] }
       ]
     }
   ]

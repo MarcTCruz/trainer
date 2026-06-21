@@ -1,76 +1,117 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>The Refactory | Code Trainer</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500&family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/src/style.css">
-</head>
-<body>
-  <div class="app">
-    <header class="header">
-      <h1>The Refactory</h1>
-      <div class="stats">
-        <div class="stat">
-          <span class="stat-value" id="xp-value">0</span>
-          <span class="stat-label">XP</span>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>The Refactory | Code Trainer</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500&family=Inter:wght@400;600;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/src/style.css" />
+  </head>
+  <body>
+    <div class="app">
+      <header class="header">
+        <h1>The Refactory</h1>
+        <button
+          class="btn btn-ghost"
+          id="browse-button"
+          type="button"
+          aria-label="Browse exercises"
+        >
+          Browse
+        </button>
+        <div class="stats">
+          <div class="stat">
+            <span class="stat-value" id="xp-value">0</span>
+            <span class="stat-label">XP</span>
+          </div>
+          <div class="stat">
+            <span class="stat-value" id="streak-value">0</span>
+            <span class="stat-label">Streak</span>
+          </div>
+          <div class="stat">
+            <span class="stat-value" id="solved-value">0</span>
+            <span class="stat-label">Solved</span>
+          </div>
         </div>
-        <div class="stat">
-          <span class="stat-value" id="streak-value">0</span>
-          <span class="stat-label">Streak</span>
+      </header>
+
+      <div class="sidebar-backdrop" id="sidebar-backdrop"></div>
+      <aside class="sidebar" id="sidebar" role="navigation" aria-label="Exercise browser">
+        <div class="sidebar-header">
+          <h2>Exercises</h2>
+          <button
+            class="btn btn-ghost sidebar-close"
+            id="sidebar-close"
+            type="button"
+            aria-label="Close sidebar"
+          >
+            &times;
+          </button>
         </div>
-        <div class="stat">
-          <span class="stat-value" id="solved-value">0</span>
-          <span class="stat-label">Solved</span>
+        <div class="sidebar-content" id="sidebar-content"></div>
+      </aside>
+
+      <div class="main">
+        <div class="exercise-panel">
+          <nav
+            class="learning-ribbon"
+            id="learning-ribbon"
+            role="navigation"
+            aria-label="Concept clusters"
+          ></nav>
+
+          <div class="exercise-header">
+            <h2 id="exercise-title"></h2>
+            <span class="difficulty-badge" id="exercise-difficulty"></span>
+          </div>
+
+          <div
+            class="evolution-stepper"
+            id="evolution-stepper"
+            role="navigation"
+            aria-label="Exercise progression"
+          ></div>
+
+          <div class="exercise-description" id="exercise-description"></div>
+
+          <div class="hint-section">
+            <button class="btn btn-ghost" id="hint-button">Hint 1/3</button>
+            <div class="hint-content" id="hint-content"></div>
+          </div>
+        </div>
+
+        <div class="editor-panel">
+          <div id="editor-container"></div>
+
+          <div class="controls">
+            <button class="btn btn-primary" id="run-button">Run Code</button>
+            <button class="btn btn-secondary" id="reset-button">Reset</button>
+            <button class="btn btn-secondary" id="format-button">Format</button>
+            <span class="shortcut-hint"
+              ><kbd>Ctrl</kbd>+<kbd>Enter</kbd> run &middot; <kbd>Shift</kbd>+<kbd>Alt</kbd>+<kbd
+                >F</kbd
+              >
+              format</span
+            >
+          </div>
+
+          <div class="wasm-status" id="wasm-status"></div>
+
+          <div id="status-message" class="status-message"></div>
+          <div class="results-section" id="results-container"></div>
         </div>
       </div>
-    </header>
 
-    <div class="main">
-      <div class="exercise-panel">
-        <nav class="learning-ribbon" id="learning-ribbon" role="navigation" aria-label="Concept clusters"></nav>
-
-        <div class="exercise-header">
-          <h2 id="exercise-title"></h2>
-          <span class="difficulty-badge" id="exercise-difficulty"></span>
-        </div>
-
-        <div class="evolution-stepper" id="evolution-stepper" role="navigation" aria-label="Exercise progression"></div>
-
-        <div class="exercise-description" id="exercise-description"></div>
-
-        <div class="hint-section">
-          <button class="btn btn-ghost" id="hint-button">Hint 1/3</button>
-          <div class="hint-content" id="hint-content"></div>
-        </div>
-
-      </div>
-
-      <div class="editor-panel">
-        <div id="editor-container"></div>
-
-        <div class="controls">
-          <button class="btn btn-primary" id="run-button">Run Code</button>
-          <button class="btn btn-secondary" id="reset-button">Reset</button>
-          <button class="btn btn-secondary" id="format-button">Format</button>
-          <span class="shortcut-hint"><kbd>Ctrl</kbd>+<kbd>Enter</kbd> run &middot; <kbd>Shift</kbd>+<kbd>Alt</kbd>+<kbd>F</kbd> format</span>
-        </div>
-
-        <div class="wasm-status" id="wasm-status"></div>
-
-        <div id="status-message" class="status-message"></div>
-        <div class="results-section" id="results-container"></div>
-      </div>
+      <footer class="footer">
+        Powered by WebAssembly (QuickJS) &middot; Code runs safely in your browser
+      </footer>
     </div>
 
-    <footer class="footer">
-      Powered by WebAssembly (QuickJS) &middot; Code runs safely in your browser
-    </footer>
-  </div>
-
-  <script type="module" src="/src/app.js"></script>
-</body>
+    <script type="module" src="/src/app.js"></script>
+  </body>
 </html>

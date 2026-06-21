@@ -1,13 +1,13 @@
-import { createEditor, getCode, setCode, onFormat } from './editor.js'
-import { runExercise, ensureQuickJS } from './runner.js'
-import { markSolved, getProgress, getSavedCode } from './progress.js'
+import { createEditor, getCode, setCode, onFormat } from './editor.js';
+import { runExercise, ensureQuickJS } from './runner.js';
+import { markSolved, getProgress, getSavedCode } from './progress.js';
 import {
   getExercise,
   getNextVariant,
   getVariantsOf,
   getCluster,
-  getAllClusters,
-} from './exercise-loader.js'
+  getAllClusters
+} from './exercise-loader.js';
 
 const elements = {
   title: document.getElementById('exercise-title'),
@@ -27,388 +27,512 @@ const elements = {
   wasmStatus: document.getElementById('wasm-status'),
   stepper: document.getElementById('evolution-stepper'),
   ribbon: document.getElementById('learning-ribbon'),
-}
+  browseButton: document.getElementById('browse-button'),
+  sidebar: document.getElementById('sidebar'),
+  sidebarBackdrop: document.getElementById('sidebar-backdrop'),
+  sidebarClose: document.getElementById('sidebar-close'),
+  sidebarContent: document.getElementById('sidebar-content')
+};
 
-let editor
-let currentHintIndex = 0
-let currentExercise = null
+let editor;
+let currentHintIndex = 0;
+let currentExercise = null;
 
 function resolveStartExercise() {
-  const progress = getProgress()
-  const solved = progress.completedExercises
-  const allClusters = getAllClusters()
+  const progress = getProgress();
+  const solved = progress.completedExercises;
+  const allClusters = getAllClusters();
   for (const cluster of allClusters) {
     for (const entry of cluster.exercises) {
-      if (!solved[entry.id]) return entry.id
+      if (!solved[entry.id]) return entry.id;
     }
   }
-  return allClusters[0]?.exercises[0]?.id ?? 'valid-parentheses'
+  return allClusters[0]?.exercises[0]?.id ?? 'valid-parentheses';
 }
 
 function loadExercise(id, keepCode = false) {
-  const exercise = getExercise(id)
-  if (!exercise) return
+  const exercise = getExercise(id);
+  if (!exercise) return;
 
-  currentExercise = exercise
-  currentHintIndex = 0
+  currentExercise = exercise;
+  currentHintIndex = 0;
 
-  elements.title.textContent = exercise.title
-  elements.difficulty.textContent = exercise.difficulty
-  elements.difficulty.dataset.level = exercise.difficulty.toLowerCase()
-  elements.description.innerHTML = formatDescription(exercise.description)
+  elements.title.textContent = exercise.title;
+  elements.difficulty.textContent = exercise.difficulty;
+  elements.difficulty.dataset.level = exercise.difficulty.toLowerCase();
+  elements.description.innerHTML = formatDescription(exercise.description);
 
   if (!keepCode) {
-    const savedCode = getSavedCode(exercise.id)
+    const savedCode = getSavedCode(exercise.id);
     if (editor) {
-      setCode(editor, savedCode || exercise.starterCode)
+      setCode(editor, savedCode || exercise.starterCode);
     } else {
-      editor = createEditor(
-        elements.editorContainer,
-        savedCode || exercise.starterCode,
-      )
+      editor = createEditor(elements.editorContainer, savedCode || exercise.starterCode);
     }
   }
 
-  elements.resultsContainer.innerHTML = ''
-  elements.statusBar.textContent = ''
-  elements.statusBar.className = 'status-message'
-  elements.hintContent.textContent = ''
-  elements.hintContent.classList.remove('visible')
-  elements.hintButton.textContent = `Hint 1/${exercise.hints?.length ?? 0}`
+  elements.resultsContainer.innerHTML = '';
+  elements.statusBar.textContent = '';
+  elements.statusBar.className = 'status-message';
+  elements.hintContent.textContent = '';
+  elements.hintContent.classList.remove('visible');
+  elements.hintButton.textContent = `Hint 1/${exercise.hints?.length ?? 0}`;
 
-  renderStepper()
-  renderRibbon()
-  updateProgressDisplay()
+  renderStepper();
+  renderRibbon();
+  updateProgressDisplay();
 }
 
 function formatDescription(desc) {
   return desc
     .split('\n')
     .map((line) => {
-      if (line.startsWith('#')) return ''
+      if (line.startsWith('#')) return '';
       return line
         .replace(/`([^`]+)`/g, '<code>$1</code>')
-        .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
+        .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
     })
     .filter(Boolean)
-    .join('<br>')
+    .join('<br>');
 }
 
 function updateProgressDisplay() {
-  const progress = getProgress()
-  elements.xpDisplay.textContent = progress.xp
-  elements.streakDisplay.textContent = progress.streak
-  elements.solvedDisplay.textContent = Object.keys(
-    progress.completedExercises,
-  ).length
+  const progress = getProgress();
+  elements.xpDisplay.textContent = progress.xp;
+  elements.streakDisplay.textContent = progress.streak;
+  elements.solvedDisplay.textContent = Object.keys(progress.completedExercises).length;
 }
 
 function renderStepper() {
-  const container = elements.stepper
-  if (!container || !currentExercise) return
+  const container = elements.stepper;
+  if (!container || !currentExercise) return;
 
-  const baseId = currentExercise.variantOf || currentExercise.id
-  const family = getVariantsOf(baseId)
-  const progress = getProgress()
-  const solved = progress.completedExercises
+  const baseId = currentExercise.variantOf || currentExercise.id;
+  const family = getVariantsOf(baseId);
+  const progress = getProgress();
+  const solved = progress.completedExercises;
 
-  container.innerHTML = ''
+  container.innerHTML = '';
 
   family.forEach((exercise, idx) => {
-    const isSolved = Boolean(solved[exercise.id])
-    const isActive = exercise.id === currentExercise.id
-    const isFirst = idx === 0
-    const prevSolved = idx === 0 || Boolean(solved[family[idx - 1].id])
-    const isLocked = !isFirst && !prevSolved && !isSolved && !isActive
+    const isSolved = Boolean(solved[exercise.id]);
+    const isActive = exercise.id === currentExercise.id;
+    const isFirst = idx === 0;
+    const prevSolved = idx === 0 || Boolean(solved[family[idx - 1].id]);
+    const isLocked = !isFirst && !prevSolved && !isSolved && !isActive;
 
     if (idx > 0) {
-      const connector = document.createElement('div')
-      connector.className = `stepper-connector${isSolved ? ' solved' : ''}`
-      container.appendChild(connector)
+      const connector = document.createElement('div');
+      connector.className = `stepper-connector${isSolved ? ' solved' : ''}`;
+      container.appendChild(connector);
     }
 
-    const node = document.createElement('button')
-    node.className = `stepper-node${isSolved ? ' solved' : ''}${isActive ? ' active' : ''}`
-    node.type = 'button'
+    const node = document.createElement('button');
+    node.className = `stepper-node${isSolved ? ' solved' : ''}${isActive ? ' active' : ''}`;
+    node.type = 'button';
 
     if (isLocked) {
-      node.setAttribute('aria-disabled', 'true')
+      node.setAttribute('aria-disabled', 'true');
     } else {
-      node.setAttribute('aria-disabled', 'false')
+      node.setAttribute('aria-disabled', 'false');
     }
 
     if (isActive) {
-      node.setAttribute('aria-current', 'step')
+      node.setAttribute('aria-current', 'step');
     }
 
-    const icon = document.createElement('span')
-    icon.className = 'node-icon'
-    icon.textContent = isSolved ? '✓' : isActive ? '●' : '○'
-    icon.setAttribute('aria-hidden', 'true')
+    const icon = document.createElement('span');
+    icon.className = 'node-icon';
+    icon.textContent = isSolved ? '✓' : isActive ? '●' : '○';
+    icon.setAttribute('aria-hidden', 'true');
 
-    const label = document.createElement('span')
-    label.textContent = exercise.title
+    const label = document.createElement('span');
+    label.textContent = exercise.title;
 
-    node.appendChild(icon)
-    node.appendChild(label)
+    node.appendChild(icon);
+    node.appendChild(label);
 
     node.addEventListener('click', () => {
-      if (isLocked) return
+      if (isLocked) return;
       if (exercise.id !== currentExercise.id) {
-        loadExercise(exercise.id, false)
+        loadExercise(exercise.id, false);
       }
-    })
+    });
 
-    container.appendChild(node)
-  })
+    container.appendChild(node);
+  });
 }
 
 function renderRibbon() {
-  const container = elements.ribbon
-  if (!container || !currentExercise) return
+  const container = elements.ribbon;
+  if (!container || !currentExercise) return;
 
-  const clusters = getAllClusters()
-  const activeCluster = getCluster(currentExercise.id)
-  const progress = getProgress()
-  const solved = progress.completedExercises
+  const clusters = getAllClusters();
+  const activeCluster = getCluster(currentExercise.id);
+  const progress = getProgress();
+  const solved = progress.completedExercises;
 
-  container.innerHTML = ''
+  container.innerHTML = '';
 
   clusters.forEach((cluster) => {
-    const isActive = cluster.id === activeCluster?.id
-    const total = cluster.exercises.length
-    const solvedCount = cluster.exercises.filter((e) => Boolean(solved[e.id]))
-      .length
-    const progressPct = total > 0 ? (solvedCount / total) * 100 : 0
+    const isActive = cluster.id === activeCluster?.id;
+    const total = cluster.exercises.length;
+    const solvedCount = cluster.exercises.filter((e) => Boolean(solved[e.id])).length;
+    const progressPct = total > 0 ? (solvedCount / total) * 100 : 0;
 
-    const pill = document.createElement('button')
-    pill.className = `ribbon-pill${isActive ? ' active' : ''}`
-    pill.type = 'button'
-    pill.textContent = cluster.title
-    pill.setAttribute('aria-pressed', String(isActive))
+    const pill = document.createElement('button');
+    pill.className = `ribbon-pill${isActive ? ' active' : ''}`;
+    pill.type = 'button';
+    pill.textContent = cluster.title;
+    pill.setAttribute('aria-pressed', String(isActive));
 
-    const bar = document.createElement('span')
-    bar.className = 'ribbon-progress'
-    bar.style.width = `${progressPct}%`
-    bar.setAttribute('aria-hidden', 'true')
+    const bar = document.createElement('span');
+    bar.className = 'ribbon-progress';
+    bar.style.width = `${progressPct}%`;
+    bar.setAttribute('aria-hidden', 'true');
 
-    pill.appendChild(bar)
-    container.appendChild(pill)
-  })
+    pill.appendChild(bar);
+
+    pill.addEventListener('click', () => {
+      if (isActive) return;
+      const firstUnsolved = cluster.exercises.find((e) => !solved[e.id]);
+      const target = firstUnsolved ?? cluster.exercises[0];
+      if (target) loadExercise(target.id, false);
+    });
+
+    container.appendChild(pill);
+  });
 }
 
-function showEvolutionPrompt(nextVariant) {
-  dismissEvolutionPrompt()
+function showEvolutionPrompt(nextVariant, forwardResult) {
+  dismissEvolutionPrompt();
 
-  const card = document.createElement('div')
-  card.className = 'evolution-prompt'
-  card.id = 'evolution-prompt'
-  card.setAttribute('role', 'status')
-  card.setAttribute('aria-live', 'polite')
+  const card = document.createElement('div');
+  card.className = 'evolution-prompt';
+  card.id = 'evolution-prompt';
+  card.setAttribute('role', 'status');
+  card.setAttribute('aria-live', 'polite');
 
-  const heading = document.createElement('h3')
-  heading.textContent = 'Base concept mastered. Ready for the next level?'
+  const heading = document.createElement('h3');
+  heading.textContent = 'Base concept mastered. Ready for the next level?';
 
-  const text = document.createElement('p')
+  const text = document.createElement('p');
   text.textContent =
     nextVariant.variantPrompt ||
-    `Next up: ${nextVariant.title}. Your code stays — only the challenge grows.`
+    `Next up: ${nextVariant.title}. Your code stays — only the challenge grows.`;
 
-  const actions = document.createElement('div')
-  actions.className = 'prompt-actions'
+  card.appendChild(heading);
+  card.appendChild(text);
 
-  const evolveBtn = document.createElement('button')
-  evolveBtn.className = 'btn btn-primary'
-  evolveBtn.type = 'button'
-  evolveBtn.textContent = `Evolve: ${nextVariant.title} →`
+  if (forwardResult && forwardResult.results.length > 0) {
+    const passCount = forwardResult.results.filter((r) => r.passed).length;
+    const totalCount = forwardResult.results.length;
+    if (passCount > 0) {
+      const indicator = document.createElement('p');
+      indicator.className = 'forward-test-indicator';
+      indicator.id = 'forward-test-indicator';
+      indicator.textContent = `Your current solution already passes ${passCount}/${totalCount} of the next challenge's tests.`;
+      card.appendChild(indicator);
+    }
+  }
+
+  const actions = document.createElement('div');
+  actions.className = 'prompt-actions';
+
+  const evolveBtn = document.createElement('button');
+  evolveBtn.className = 'btn btn-primary';
+  evolveBtn.type = 'button';
+  evolveBtn.textContent = `Evolve: ${nextVariant.title} →`;
   evolveBtn.addEventListener('click', () => {
-    dismissEvolutionPrompt()
-    loadExercise(nextVariant.id, true)
-  })
+    dismissEvolutionPrompt();
+    loadExercise(nextVariant.id, true);
+  });
 
-  const stayBtn = document.createElement('button')
-  stayBtn.className = 'btn btn-secondary'
-  stayBtn.type = 'button'
-  stayBtn.textContent = 'Stay & Refactor'
-  stayBtn.addEventListener('click', dismissEvolutionPrompt)
+  const stayBtn = document.createElement('button');
+  stayBtn.className = 'btn btn-secondary';
+  stayBtn.type = 'button';
+  stayBtn.textContent = 'Stay & Refactor';
+  stayBtn.addEventListener('click', dismissEvolutionPrompt);
 
-  actions.appendChild(evolveBtn)
-  actions.appendChild(stayBtn)
+  actions.appendChild(evolveBtn);
+  actions.appendChild(stayBtn);
 
-  card.appendChild(heading)
-  card.appendChild(text)
-  card.appendChild(actions)
+  card.appendChild(actions);
 
-  elements.resultsContainer.appendChild(card)
+  elements.resultsContainer.appendChild(card);
 }
 
 function dismissEvolutionPrompt() {
-  const existing = document.getElementById('evolution-prompt')
-  if (existing) existing.remove()
+  const existing = document.getElementById('evolution-prompt');
+  if (existing) existing.remove();
 }
 
 async function handleRun() {
-  elements.runButton.disabled = true
-  elements.runButton.textContent = 'Running...'
-  elements.resultsContainer.innerHTML = ''
-  elements.statusBar.textContent = ''
-  elements.statusBar.className = 'status-message'
+  elements.runButton.disabled = true;
+  elements.runButton.textContent = 'Running...';
+  elements.resultsContainer.innerHTML = '';
+  elements.statusBar.textContent = '';
+  elements.statusBar.className = 'status-message';
 
-  elements.wasmStatus.textContent = 'Loading WASM sandbox...'
-  elements.wasmStatus.classList.add('visible')
+  elements.wasmStatus.textContent = 'Loading WASM sandbox...';
+  elements.wasmStatus.classList.add('visible');
 
   try {
-    await ensureQuickJS()
-    elements.wasmStatus.textContent = 'Executing in sandbox...'
+    await ensureQuickJS();
+    elements.wasmStatus.textContent = 'Executing in sandbox...';
 
-    const userCode = getCode(editor)
-    const result = await runExercise(userCode, currentExercise)
+    const userCode = getCode(editor);
+    const result = await runExercise(userCode, currentExercise);
 
-    elements.wasmStatus.classList.remove('visible')
-    renderResults(result)
+    elements.wasmStatus.classList.remove('visible');
+    renderResults(result);
 
     if (result.allPassed) {
-      markSolved(currentExercise.id, userCode)
-      updateProgressDisplay()
-      renderStepper()
-      renderRibbon()
-      elements.statusBar.textContent = '✔ All tests passed!'
-      elements.statusBar.className = 'status-message success'
+      markSolved(currentExercise.id, userCode);
+      updateProgressDisplay();
+      renderStepper();
+      renderRibbon();
+      elements.statusBar.textContent = '✔ All tests passed!';
+      elements.statusBar.className = 'status-message success';
 
-      const nextVariant = getNextVariant(currentExercise.id)
+      const nextVariant = getNextVariant(currentExercise.id);
       if (nextVariant) {
-        showEvolutionPrompt(nextVariant)
+        // Forward-test: silently run user code against next variant's tests
+        let forwardResult = null;
+        try {
+          let forwardCode = userCode;
+          if (nextVariant.functionName !== currentExercise.functionName) {
+            forwardCode += `\nvar ${nextVariant.functionName} = ${currentExercise.functionName};`;
+          }
+          forwardResult = await runExercise(forwardCode, nextVariant);
+        } catch {
+          // Silent — forward-testing is purely informational
+        }
+        showEvolutionPrompt(nextVariant, forwardResult);
       }
     } else if (result.error) {
-      elements.statusBar.textContent = `✘ Error: ${result.error}`
-      elements.statusBar.className = 'status-message error'
+      elements.statusBar.textContent = `✘ Error: ${result.error}`;
+      elements.statusBar.className = 'status-message error';
     } else {
-      const passCount = result.results.filter((r) => r.passed).length
-      elements.statusBar.textContent = `⚠ ${passCount}/${result.results.length} tests passed`
-      elements.statusBar.className = 'status-message partial'
+      const passCount = result.results.filter((r) => r.passed).length;
+      elements.statusBar.textContent = `⚠ ${passCount}/${result.results.length} tests passed`;
+      elements.statusBar.className = 'status-message partial';
     }
   } catch (err) {
-    elements.wasmStatus.classList.remove('visible')
-    elements.statusBar.textContent = `Runner error: ${err.message}`
-    elements.statusBar.className = 'status-message error'
+    elements.wasmStatus.classList.remove('visible');
+    elements.statusBar.textContent = `Runner error: ${err.message}`;
+    elements.statusBar.className = 'status-message error';
   } finally {
-    elements.runButton.disabled = false
-    elements.runButton.textContent = 'Run Code'
+    elements.runButton.disabled = false;
+    elements.runButton.textContent = 'Run Code';
   }
 }
 
 function renderResults(result) {
-  const container = elements.resultsContainer
-  container.innerHTML = ''
+  const container = elements.resultsContainer;
+  container.innerHTML = '';
 
   if (result.error && result.results.length === 0) {
-    const errorEl = document.createElement('div')
-    errorEl.className = 'test-result error'
-    errorEl.innerHTML = `<span class="result-icon">!</span> <span class="result-text">${escapeHtml(result.error)}</span>`
-    container.appendChild(errorEl)
-    return
+    const errorEl = document.createElement('div');
+    errorEl.className = 'test-result error';
+    errorEl.innerHTML = `<span class="result-icon">!</span> <span class="result-text">${escapeHtml(result.error)}</span>`;
+    container.appendChild(errorEl);
+    return;
   }
 
-  const fnName = currentExercise.functionName
-  const paramNames = currentExercise.params ?? ['input']
+  const fnName = currentExercise.functionName;
+  const paramNames = currentExercise.params ?? ['input'];
 
   result.results.forEach((r, i) => {
-    const el = document.createElement('div')
-    el.className = `test-result ${r.passed ? 'pass' : 'fail'}`
+    const el = document.createElement('div');
+    el.className = `test-result ${r.passed ? 'pass' : 'fail'}`;
 
-    const icon = r.passed ? '✓' : '✗'
-    const verdict = r.passed ? 'PASS' : 'FAIL'
-    const args = r.input.map((v) => JSON.stringify(v)).join(', ')
+    const icon = r.passed ? '✓' : '✗';
+    const verdict = r.passed ? 'PASS' : 'FAIL';
+    const args = r.input.map((v) => JSON.stringify(v)).join(', ');
 
-    let detail = `<span class="result-icon">${icon}</span>`
-    detail += `<span class="result-verdict">${verdict}</span>`
-    detail += `<span class="result-label">Test ${i + 1}:</span>`
-    detail += `<span class="result-input">${escapeHtml(fnName)}(${escapeHtml(args)})</span>`
+    let detail = `<span class="result-icon">${icon}</span>`;
+    detail += `<span class="result-verdict">${verdict}</span>`;
+    detail += `<span class="result-label">Test ${i + 1}:</span>`;
+    detail += `<span class="result-input">${escapeHtml(fnName)}(${escapeHtml(args)})</span>`;
 
     if (!r.passed) {
       if (r.error) {
-        detail += `<span class="result-error">Error: ${escapeHtml(r.error)}</span>`
+        detail += `<span class="result-error">Error: ${escapeHtml(r.error)}</span>`;
       } else {
-        detail += `<span class="result-expected">Expected: ${escapeHtml(formatValue(r.expected))}</span>`
-        detail += `<span class="result-actual">Got: ${escapeHtml(formatValue(r.actual))}</span>`
+        detail += `<span class="result-expected">Expected: ${escapeHtml(formatValue(r.expected))}</span>`;
+        detail += `<span class="result-actual">Got: ${escapeHtml(formatValue(r.actual))}</span>`;
       }
     }
 
-    el.innerHTML = detail
-    container.appendChild(el)
-  })
+    el.innerHTML = detail;
+    container.appendChild(el);
+  });
+}
+
+function toggleSidebar() {
+  const isOpen = elements.sidebar.classList.toggle('open');
+  elements.sidebarBackdrop.classList.toggle('open', isOpen);
+  elements.browseButton.setAttribute('aria-expanded', String(isOpen));
+  if (isOpen) renderSidebar();
+}
+
+function closeSidebar() {
+  elements.sidebar.classList.remove('open');
+  elements.sidebarBackdrop.classList.remove('open');
+  elements.browseButton.setAttribute('aria-expanded', 'false');
+}
+
+function renderSidebar() {
+  const container = elements.sidebarContent;
+  if (!container || !currentExercise) return;
+
+  const clusters = getAllClusters();
+  const progress = getProgress();
+  const solved = progress.completedExercises;
+
+  container.innerHTML = '';
+
+  clusters.forEach((cluster) => {
+    const clusterDiv = document.createElement('div');
+    clusterDiv.className = 'sidebar-cluster';
+
+    const titleDiv = document.createElement('div');
+    titleDiv.className = 'sidebar-cluster-title';
+
+    const titleSpan = document.createElement('span');
+    titleSpan.textContent = cluster.title;
+
+    const solvedCount = cluster.exercises.filter((e) => Boolean(solved[e.id])).length;
+    const progressSpan = document.createElement('span');
+    progressSpan.className = 'sidebar-cluster-progress';
+    progressSpan.textContent = `${solvedCount}/${cluster.exercises.length}`;
+
+    titleDiv.appendChild(titleSpan);
+    titleDiv.appendChild(progressSpan);
+    clusterDiv.appendChild(titleDiv);
+
+    cluster.exercises.forEach((entry, idx) => {
+      const exercise = getExercise(entry.id);
+      if (!exercise) return;
+
+      const isSolved = Boolean(solved[entry.id]);
+      const isActive = entry.id === currentExercise.id;
+      const isVariant = entry.type === 'variant';
+      const prevSolved = idx === 0 || Boolean(solved[cluster.exercises[idx - 1].id]);
+      const isLocked = idx > 0 && !prevSolved && !isSolved && !isActive;
+
+      const btn = document.createElement('button');
+      btn.className = 'sidebar-exercise';
+      if (isSolved) btn.classList.add('solved');
+      if (isActive) btn.classList.add('active');
+      if (isVariant) btn.classList.add('sidebar-exercise-variant');
+      btn.type = 'button';
+
+      if (isLocked) {
+        btn.setAttribute('aria-disabled', 'true');
+      }
+
+      const icon = document.createElement('span');
+      icon.className = 'sidebar-exercise-icon';
+      icon.textContent = isSolved ? '✓' : isActive ? '●' : '○';
+      icon.setAttribute('aria-hidden', 'true');
+
+      const label = document.createElement('span');
+      label.textContent = exercise.title;
+
+      btn.appendChild(icon);
+      btn.appendChild(label);
+
+      btn.addEventListener('click', () => {
+        if (isLocked) return;
+        loadExercise(entry.id, false);
+        closeSidebar();
+      });
+
+      clusterDiv.appendChild(btn);
+    });
+
+    container.appendChild(clusterDiv);
+  });
 }
 
 function handleReset() {
-  if (!currentExercise) return
-  setCode(editor, currentExercise.starterCode)
-  elements.resultsContainer.innerHTML = ''
-  elements.statusBar.textContent = ''
-  elements.statusBar.className = 'status-message'
-  currentHintIndex = 0
-  elements.hintContent.textContent = ''
-  elements.hintContent.classList.remove('visible')
-  elements.hintButton.textContent = `Hint 1/${currentExercise.hints?.length ?? 0}`
+  if (!currentExercise) return;
+  setCode(editor, currentExercise.starterCode);
+  elements.resultsContainer.innerHTML = '';
+  elements.statusBar.textContent = '';
+  elements.statusBar.className = 'status-message';
+  currentHintIndex = 0;
+  elements.hintContent.textContent = '';
+  elements.hintContent.classList.remove('visible');
+  elements.hintButton.textContent = `Hint 1/${currentExercise.hints?.length ?? 0}`;
 }
 
 function handleHint() {
-  if (!currentExercise?.hints?.length) return
+  if (!currentExercise?.hints?.length) return;
 
   if (currentHintIndex < currentExercise.hints.length) {
-    elements.hintContent.textContent = currentExercise.hints[currentHintIndex]
-    elements.hintContent.classList.add('visible')
-    currentHintIndex++
+    elements.hintContent.textContent = currentExercise.hints[currentHintIndex];
+    elements.hintContent.classList.add('visible');
+    currentHintIndex++;
     elements.hintButton.textContent =
       currentHintIndex < currentExercise.hints.length
         ? `Hint ${currentHintIndex + 1}/${currentExercise.hints.length}`
-        : 'No more hints'
+        : 'No more hints';
   }
 }
 
 function formatValue(val) {
-  if (val === undefined) return 'undefined'
-  if (val === null) return 'null'
-  return JSON.stringify(val)
+  if (val === undefined) return 'undefined';
+  if (val === null) return 'null';
+  return JSON.stringify(val);
 }
 
 function escapeHtml(str) {
-  const div = document.createElement('div')
-  div.textContent = str
-  return div.innerHTML
+  const div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
 }
 
 async function handleFormat() {
-  const code = getCode(editor)
+  const code = getCode(editor);
   try {
-    const prettier = await import('prettier/standalone')
-    const parserBabel = await import('prettier/plugins/babel')
-    const parserEstree = await import('prettier/plugins/estree')
+    const prettier = await import('prettier/standalone');
+    const parserBabel = await import('prettier/plugins/babel');
+    const parserEstree = await import('prettier/plugins/estree');
     const formatted = await prettier.format(code, {
       parser: 'babel',
       plugins: [parserBabel.default, parserEstree.default],
       semi: true,
       singleQuote: true,
       tabWidth: 2,
-      printWidth: 60,
-    })
-    setCode(editor, formatted.trimEnd())
+      printWidth: 60
+    });
+    setCode(editor, formatted.trimEnd());
   } catch (err) {
-    elements.statusBar.textContent = `✘ Format error: ${err.message}`
-    elements.statusBar.className = 'status-message error'
+    elements.statusBar.textContent = `✘ Format error: ${err.message}`;
+    elements.statusBar.className = 'status-message error';
   }
 }
 
-elements.runButton.addEventListener('click', handleRun)
-elements.resetButton.addEventListener('click', handleReset)
-elements.formatButton.addEventListener('click', handleFormat)
-elements.hintButton.addEventListener('click', handleHint)
-onFormat(handleFormat)
+elements.runButton.addEventListener('click', handleRun);
+elements.resetButton.addEventListener('click', handleReset);
+elements.formatButton.addEventListener('click', handleFormat);
+elements.hintButton.addEventListener('click', handleHint);
+elements.browseButton.addEventListener('click', toggleSidebar);
+elements.sidebarClose.addEventListener('click', closeSidebar);
+elements.sidebarBackdrop.addEventListener('click', closeSidebar);
+onFormat(handleFormat);
 
 document.addEventListener('keydown', (e) => {
   if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
-    e.preventDefault()
-    handleRun()
+    e.preventDefault();
+    handleRun();
   }
-})
+  if (e.key === 'Escape') {
+    closeSidebar();
+  }
+});
 
-loadExercise(resolveStartExercise())
+loadExercise(resolveStartExercise());

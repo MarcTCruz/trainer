@@ -1,0 +1,27 @@
+{
+  "id": "daily-temperatures",
+  "variantOf": null,
+  "variantOrder": 1,
+  "variantPrompt": null,
+  "title": "Daily Temperatures",
+  "difficulty": "Medium",
+  "description": "Given an array of daily temperatures, return an array where each element tells you how many days you have to wait until a warmer temperature. If no warmer day exists, put `0`.\n\n**Example:**\n```\ntemperatures = [73, 74, 75, 71, 69, 72, 76, 73]\nResult = [1, 1, 4, 2, 1, 1, 0, 0]\n```",
+  "functionName": "dailyTemperatures",
+  "params": ["temperatures"],
+  "starterCode": "function dailyTemperatures(temperatures) {\n  // Your solution here\n  \n}",
+  "testCases": [
+    { "input": [[73, 74, 75, 71, 69, 72, 76, 73]], "expected": [1, 1, 4, 2, 1, 1, 0, 0] },
+    { "input": [[30, 40, 50, 60]], "expected": [1, 1, 1, 0] },
+    { "input": [[30, 60, 90]], "expected": [1, 1, 0] },
+    { "input": [[90, 60, 30]], "expected": [0, 0, 0] },
+    { "input": [[70]], "expected": [0] },
+    { "input": [[70, 70, 70]], "expected": [0, 0, 0] },
+    { "input": [[55, 38, 27, 46, 51, 62, 25]], "expected": [5, 2, 1, 1, 1, 0, 0] },
+    { "input": [[89, 62, 70, 58, 47, 80, 82]], "expected": [0, 1, 3, 2, 1, 1, 0] }
+  ],
+  "hints": [
+    "The brute-force checks every future day for each day — O(n²). A stack can do this in O(n).",
+    "Use a stack to track indices of days whose answer you haven't found yet. Process left to right.",
+    "When the current temperature is warmer than the top of the stack, pop and calculate the difference in indices."
+  ]
+}
