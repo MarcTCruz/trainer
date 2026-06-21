@@ -945,3 +945,133 @@ test('Stock Span variant loads after solving Daily Temperatures and passes all t
   const passResults = page.locator('.test-result.pass');
   await expect(passResults).toHaveCount(7);
 });
+
+// ---------------------------------------------------------------------------
+// GitHub Auth — PAT paste flow
+// ---------------------------------------------------------------------------
+
+test('Sign in button is visible in header', async ({ page }) => {
+  await page.goto('/');
+  await expect(page.locator('#sign-in-button')).toBeVisible();
+});
+
+test('clicking Sign in opens auth modal', async ({ page }) => {
+  await page.goto('/');
+  await page.locator('#sign-in-button').click();
+
+  const modal = page.locator('#auth-modal');
+  await expect(modal).toHaveClass(/open/);
+
+  // Modal contains expected elements
+  await expect(modal).toContainText('Sign in with GitHub');
+  await expect(modal).toContainText('Personal Access Token');
+  await expect(page.locator('#token-input')).toBeVisible();
+  await expect(page.locator('#auth-connect-button')).toBeVisible();
+});
+
+test('auth modal has correct GitHub token creation link', async ({ page }) => {
+  await page.goto('/');
+  await page.locator('#sign-in-button').click();
+
+  const link = page.locator('#auth-github-link');
+  await expect(link).toBeVisible();
+  await expect(link).toHaveAttribute(
+    'href',
+    'https://github.com/settings/tokens/new?scopes=repo&description=The+Refactory+Trainer'
+  );
+  await expect(link).toHaveAttribute('target', '_blank');
+});
+
+test('empty token shows error message', async ({ page }) => {
+  await page.goto('/');
+  await page.locator('#sign-in-button').click();
+  await page.locator('#auth-connect-button').click();
+
+  await expect(page.locator('#auth-error')).toContainText('Please paste your token');
+});
+
+test('invalid token shows error via mocked GitHub API', async ({ page }) => {
+  // Mock GitHub API to return 401
+  await page.route('https://api.github.com/user', (route) =>
+    route.fulfill({ status: 401, body: 'Bad credentials' })
+  );
+
+  await page.goto('/');
+  await page.locator('#sign-in-button').click();
+  await page.locator('#token-input').fill('ghp_invalidtoken123');
+  await page.locator('#auth-connect-button').click();
+
+  await expect(page.locator('#auth-error')).toContainText('Invalid token', {
+    timeout: 5000
+  });
+});
+
+test('valid token signs in and shows username via mocked GitHub API', async ({ page }) => {
+  // Mock GitHub API to return a user
+  await page.route('https://api.github.com/user', (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        login: 'testuser',
+        avatar_url: 'https://avatars.githubusercontent.com/u/1?v=4',
+        name: 'Test User'
+      })
+    })
+  );
+
+  await page.goto('/');
+  await page.locator('#sign-in-button').click();
+  await page.locator('#token-input').fill('ghp_validtoken123');
+  await page.locator('#auth-connect-button').click();
+
+  // Modal should close
+  await expect(page.locator('#auth-modal')).not.toHaveClass(/open/, {
+    timeout: 5000
+  });
+
+  // Username visible in header
+  await expect(page.locator('#auth-username')).toContainText('testuser');
+
+  // Sign out button visible
+  await expect(page.locator('#sign-out-button')).toBeVisible();
+});
+
+test('sign out clears auth state', async ({ page }) => {
+  // Mock GitHub API
+  await page.route('https://api.github.com/user', (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        login: 'testuser',
+        avatar_url: 'https://avatars.githubusercontent.com/u/1?v=4',
+        name: 'Test User'
+      })
+    })
+  );
+
+  await page.goto('/');
+  await page.locator('#sign-in-button').click();
+  await page.locator('#token-input').fill('ghp_validtoken123');
+  await page.locator('#auth-connect-button').click();
+
+  await expect(page.locator('#auth-username')).toContainText('testuser', {
+    timeout: 5000
+  });
+
+  // Click sign out
+  await page.locator('#sign-out-button').click();
+
+  // Sign in button should be back
+  await expect(page.locator('#sign-in-button')).toBeVisible();
+});
+
+test('Escape closes auth modal', async ({ page }) => {
+  await page.goto('/');
+  await page.locator('#sign-in-button').click();
+  await expect(page.locator('#auth-modal')).toHaveClass(/open/);
+
+  await page.keyboard.press('Escape');
+  await expect(page.locator('#auth-modal')).not.toHaveClass(/open/);
+});

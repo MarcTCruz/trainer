@@ -1,4 +1,13 @@
 import { createEditor, getCode, setCode, onFormat } from './editor.js';
+import {
+  saveToken,
+  getToken,
+  clearToken,
+  getSavedUser,
+  validateAndFetchUser,
+  isAuthenticated,
+  GITHUB_TOKEN_URL
+} from './github-auth.js';
 import { runExercise, ensureQuickJS } from './runner.js';
 import { markSolved, getProgress, getSavedCode } from './progress.js';
 import {
@@ -31,7 +40,16 @@ const elements = {
   sidebar: document.getElementById('sidebar'),
   sidebarBackdrop: document.getElementById('sidebar-backdrop'),
   sidebarClose: document.getElementById('sidebar-close'),
-  sidebarContent: document.getElementById('sidebar-content')
+  sidebarContent: document.getElementById('sidebar-content'),
+  authSection: document.getElementById('auth-section'),
+  signInButton: document.getElementById('sign-in-button'),
+  authModal: document.getElementById('auth-modal'),
+  authModalBackdrop: document.getElementById('auth-modal-backdrop'),
+  authModalClose: document.getElementById('auth-modal-close'),
+  authConnectButton: document.getElementById('auth-connect-button'),
+  authCancelButton: document.getElementById('auth-cancel-button'),
+  tokenInput: document.getElementById('token-input'),
+  authError: document.getElementById('auth-error')
 };
 
 let editor;
@@ -370,6 +388,91 @@ function renderResults(result) {
   });
 }
 
+function openAuthModal() {
+  elements.authModal.classList.add('open');
+  elements.authModalBackdrop.classList.add('open');
+  elements.tokenInput.value = '';
+  elements.authError.textContent = '';
+  elements.tokenInput.focus();
+}
+
+function closeAuthModal() {
+  elements.authModal.classList.remove('open');
+  elements.authModalBackdrop.classList.remove('open');
+}
+
+function renderAuthState() {
+  const section = elements.authSection;
+  section.innerHTML = '';
+
+  if (isAuthenticated()) {
+    const user = getSavedUser();
+    if (user) {
+      const container = document.createElement('div');
+      container.className = 'auth-user';
+
+      const avatar = document.createElement('img');
+      avatar.className = 'auth-avatar';
+      avatar.src = user.avatar_url;
+      avatar.alt = user.login;
+
+      const username = document.createElement('span');
+      username.className = 'auth-username';
+      username.id = 'auth-username';
+      username.textContent = user.login;
+
+      const signOut = document.createElement('button');
+      signOut.className = 'btn btn-ghost';
+      signOut.id = 'sign-out-button';
+      signOut.type = 'button';
+      signOut.textContent = 'Sign out';
+      signOut.addEventListener('click', handleSignOut);
+
+      container.appendChild(avatar);
+      container.appendChild(username);
+      section.appendChild(container);
+      section.appendChild(signOut);
+    }
+  } else {
+    const signIn = document.createElement('button');
+    signIn.className = 'btn btn-ghost';
+    signIn.id = 'sign-in-button';
+    signIn.type = 'button';
+    signIn.textContent = 'Sign in';
+    signIn.addEventListener('click', openAuthModal);
+    section.appendChild(signIn);
+  }
+}
+
+async function handleConnect() {
+  const token = elements.tokenInput.value.trim();
+  if (!token) {
+    elements.authError.textContent = 'Please paste your token.';
+    return;
+  }
+
+  elements.authConnectButton.disabled = true;
+  elements.authConnectButton.textContent = 'Connecting...';
+  elements.authError.textContent = '';
+
+  try {
+    await validateAndFetchUser(token);
+    saveToken(token);
+    closeAuthModal();
+    renderAuthState();
+  } catch {
+    elements.authError.textContent = 'Invalid token — check that you copied the full string.';
+  } finally {
+    elements.authConnectButton.disabled = false;
+    elements.authConnectButton.textContent = 'Connect';
+  }
+}
+
+function handleSignOut() {
+  clearToken();
+  renderAuthState();
+}
+
 function toggleSidebar() {
   const isOpen = elements.sidebar.classList.toggle('open');
   elements.sidebarBackdrop.classList.toggle('open', isOpen);
@@ -523,6 +626,10 @@ elements.hintButton.addEventListener('click', handleHint);
 elements.browseButton.addEventListener('click', toggleSidebar);
 elements.sidebarClose.addEventListener('click', closeSidebar);
 elements.sidebarBackdrop.addEventListener('click', closeSidebar);
+elements.authModalClose.addEventListener('click', closeAuthModal);
+elements.authModalBackdrop.addEventListener('click', closeAuthModal);
+elements.authConnectButton.addEventListener('click', handleConnect);
+elements.authCancelButton.addEventListener('click', closeAuthModal);
 onFormat(handleFormat);
 
 document.addEventListener('keydown', (e) => {
@@ -532,7 +639,9 @@ document.addEventListener('keydown', (e) => {
   }
   if (e.key === 'Escape') {
     closeSidebar();
+    closeAuthModal();
   }
 });
 
 loadExercise(resolveStartExercise());
+renderAuthState();

@@ -24,6 +24,9 @@
         >
           Browse
         </button>
+        <div class="auth-section" id="auth-section">
+          <button class="btn btn-ghost" id="sign-in-button" type="button">Sign in</button>
+        </div>
         <div class="stats">
           <div class="stat">
             <span class="stat-value" id="xp-value">0</span>
@@ -55,6 +58,56 @@
         </div>
         <div class="sidebar-content" id="sidebar-content"></div>
       </aside>
+
+      <div class="auth-modal-backdrop" id="auth-modal-backdrop"></div>
+      <div
+        class="auth-modal"
+        id="auth-modal"
+        role="dialog"
+        aria-label="Sign in with GitHub"
+        aria-modal="true"
+      >
+        <div class="auth-modal-content">
+          <div class="auth-modal-header">
+            <h2>Sign in with GitHub</h2>
+            <button
+              class="btn btn-ghost auth-modal-close"
+              id="auth-modal-close"
+              type="button"
+              aria-label="Close"
+            >
+              &times;
+            </button>
+          </div>
+          <p class="auth-modal-text">
+            Create a GitHub Personal Access Token to save your progress and sync solutions across
+            devices.
+          </p>
+          <a
+            class="btn btn-secondary auth-github-link"
+            id="auth-github-link"
+            href="https://github.com/settings/tokens/new?scopes=repo&description=The+Refactory+Trainer"
+            target="_blank"
+            rel="noopener noreferrer"
+            >Create token on GitHub →</a
+          >
+          <div class="auth-input-group">
+            <label for="token-input" class="auth-label">Paste your token</label>
+            <input
+              type="password"
+              id="token-input"
+              class="auth-input"
+              placeholder="ghp_xxxxxxxxxxxx"
+              autocomplete="off"
+            />
+          </div>
+          <div class="auth-error" id="auth-error"></div>
+          <div class="auth-modal-actions">
+            <button class="btn btn-primary" id="auth-connect-button" type="button">Connect</button>
+            <button class="btn btn-secondary" id="auth-cancel-button" type="button">Cancel</button>
+          </div>
+        </div>
+      </div>
 
       <div class="main">
         <div class="exercise-panel">
