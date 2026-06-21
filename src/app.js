@@ -599,7 +599,8 @@ function simpleHash(str) {
 
 function pushToCI(token, owner, exerciseId, code) {
   const pending = get(CI_PENDING_KEY) ?? {};
-  const codeHash = simpleHash(code);
+  const normalized = code.replace(/\s+/g, ' ').trim();
+  const codeHash = simpleHash(normalized);
   if (pending[exerciseId] === codeHash) return;
 
   pending[exerciseId] = codeHash;
