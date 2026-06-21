@@ -1075,3 +1075,55 @@ test('Escape closes auth modal', async ({ page }) => {
   await page.keyboard.press('Escape');
   await expect(page.locator('#auth-modal')).not.toHaveClass(/open/);
 });
+
+// ---------------------------------------------------------------------------
+// IndexedDB migration
+// ---------------------------------------------------------------------------
+
+test('app works with completely empty storage', async ({ page }) => {
+  // Clear everything before loading
+  await page.goto('/');
+  await page.evaluate(() => {
+    localStorage.clear();
+    indexedDB.deleteDatabase('trainer-db');
+  });
+  await page.reload();
+
+  // App should load normally with default state
+  await expect(page.locator('#exercise-title')).toContainText('Valid Parentheses', {
+    timeout: 5000
+  });
+  await expect(page.locator('#solved-value')).toHaveText('0');
+  await expect(page.locator('#xp-value')).toHaveText('0');
+});
+
+test('localStorage data migrates to IndexedDB on first load', async ({ page }) => {
+  await page.goto('/');
+
+  // Simulate legacy localStorage data (as if the app had been used before migration)
+  await page.evaluate(() => {
+    indexedDB.deleteDatabase('trainer-db');
+    localStorage.setItem(
+      'trainer_v1',
+      JSON.stringify({
+        completedExercises: {
+          'valid-parentheses': { code: 'function isValid() {}', solvedAt: '2026-06-20' }
+        },
+        xp: 100,
+        streak: 1,
+        lastActiveDate: '2026-06-20'
+      })
+    );
+  });
+
+  // Reload to trigger migration
+  await page.reload();
+
+  // App should show the migrated progress
+  await expect(page.locator('#solved-value')).toHaveText('1', { timeout: 5000 });
+  await expect(page.locator('#xp-value')).toHaveText('100');
+
+  // localStorage should be cleared after migration
+  const lsValue = await page.evaluate(() => localStorage.getItem('trainer_v1'));
+  expect(lsValue).toBeNull();
+});

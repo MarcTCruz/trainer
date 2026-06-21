@@ -1,3 +1,4 @@
+import { init as initStorage } from './storage.js';
 import { createEditor, getCode, setCode, onFormat } from './editor.js';
 import {
   saveToken,
@@ -643,5 +644,10 @@ document.addEventListener('keydown', (e) => {
   }
 });
 
-loadExercise(resolveStartExercise());
-renderAuthState();
+async function boot() {
+  await initStorage();
+  loadExercise(resolveStartExercise());
+  renderAuthState();
+}
+
+boot();

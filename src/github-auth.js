@@ -1,28 +1,32 @@
+import { get, set, remove } from './storage.js';
+
 const TOKEN_KEY = 'trainer_github_token';
 const USER_KEY = 'trainer_github_user';
 const GITHUB_API = 'https://api.github.com';
 
+export class GitHubApiError extends Error {
+  constructor(status) {
+    super(`GitHub API error: ${status}`);
+    this.name = 'GitHubApiError';
+    this.status = status;
+  }
+}
+
 export function saveToken(token) {
-  localStorage.setItem(TOKEN_KEY, token);
+  set(TOKEN_KEY, token);
 }
 
 export function getToken() {
-  return localStorage.getItem(TOKEN_KEY);
+  return get(TOKEN_KEY);
 }
 
 export function clearToken() {
-  localStorage.removeItem(TOKEN_KEY);
-  localStorage.removeItem(USER_KEY);
+  remove(TOKEN_KEY);
+  remove(USER_KEY);
 }
 
 export function getSavedUser() {
-  const raw = localStorage.getItem(USER_KEY);
-  if (!raw) return null;
-  try {
-    return JSON.parse(raw);
-  } catch {
-    return null;
-  }
+  return get(USER_KEY);
 }
 
 export async function validateAndFetchUser(token) {
@@ -30,7 +34,7 @@ export async function validateAndFetchUser(token) {
     headers: { Authorization: `token ${token}` }
   });
   if (!res.ok) {
-    throw new Error(`GitHub API error: ${res.status}`);
+    throw new GitHubApiError(res.status);
   }
   const data = await res.json();
   const user = {
@@ -38,7 +42,7 @@ export async function validateAndFetchUser(token) {
     avatar_url: data.avatar_url,
     name: data.name
   };
-  localStorage.setItem(USER_KEY, JSON.stringify(user));
+  set(USER_KEY, user);
   return user;
 }
 
