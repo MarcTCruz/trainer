@@ -759,6 +759,10 @@ function applyI18nToDOM() {
   elements.authCancelButton.textContent = t('auth.cancel');
   document.querySelector('.footer').textContent = t('app.footer');
 
+  elements.runButton.textContent = t('run.runCode');
+  elements.resetButton.textContent = t('run.reset');
+  elements.formatButton.textContent = t('run.format');
+
   const statLabels = document.querySelectorAll('.stat-label');
   const labelKeys = ['stats.xp', 'stats.streak', 'stats.solved'];
   statLabels.forEach((el, i) => { if (labelKeys[i]) el.textContent = t(labelKeys[i]); });

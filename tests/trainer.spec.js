@@ -1498,3 +1498,81 @@ test('CI sync errors do not break solving', async ({ page }) => {
   // Progress still updated locally
   await expect(page.locator('#solved-value')).not.toHaveText('0', { timeout: 5000 });
 });
+
+// ---------------------------------------------------------------------------
+// i18n — translation completeness and locale switching
+// ---------------------------------------------------------------------------
+
+test('i18n: all locale files have the same keys and placeholders as en.json', async () => {
+  const { readFileSync, readdirSync } = await import('fs');
+  const { join } = await import('path');
+
+  const i18nDir = join(process.cwd(), 'src', 'i18n');
+  const en = JSON.parse(readFileSync(join(i18nDir, 'en.json'), 'utf-8'));
+  const enKeys = Object.keys(en);
+
+  const localeFiles = readdirSync(i18nDir).filter(f => f.endsWith('.json') && f !== 'en.json');
+  expect(localeFiles.length).toBeGreaterThan(0);
+
+  for (const file of localeFiles) {
+    const locale = JSON.parse(readFileSync(join(i18nDir, file), 'utf-8'));
+    const localeKeys = Object.keys(locale);
+
+    const missing = enKeys.filter(k => !localeKeys.includes(k));
+    expect(missing, `${file} missing keys`).toEqual([]);
+
+    const extra = localeKeys.filter(k => !enKeys.includes(k));
+    expect(extra, `${file} extra keys`).toEqual([]);
+
+    const empty = localeKeys.filter(k => locale[k] === '');
+    expect(empty, `${file} empty values`).toEqual([]);
+
+    for (const key of enKeys) {
+      const enPh = (en[key].match(/\{[^}]+\}/g) || []).sort();
+      const localePh = (locale[key]?.match(/\{[^}]+\}/g) || []).sort();
+      expect(localePh, `${file} "${key}" placeholders`).toEqual(enPh);
+    }
+  }
+});
+
+test('locale selector switches UI to Portuguese and back to English', async ({ page }) => {
+  await page.goto('/');
+
+  // Default is English
+  await expect(page.locator('#run-button')).toHaveText('Run Code');
+  await expect(page.locator('#reset-button')).toHaveText('Reset');
+  await expect(page.locator('#browse-button')).toHaveText('Browse');
+
+  // Switch to pt-BR
+  await page.locator('.locale-btn', { hasText: 'pt-BR' }).click();
+
+  // Verify Portuguese strings
+  await expect(page.locator('#run-button')).toHaveText('Executar');
+  await expect(page.locator('#reset-button')).toHaveText('Resetar');
+  await expect(page.locator('#format-button')).toHaveText('Formatar');
+  await expect(page.locator('#browse-button')).toHaveText('Explorar');
+
+  // Switch back to English
+  await page.locator('.locale-btn', { hasText: 'en' }).click();
+
+  // Verify English strings
+  await expect(page.locator('#run-button')).toHaveText('Run Code');
+  await expect(page.locator('#reset-button')).toHaveText('Reset');
+  await expect(page.locator('#format-button')).toHaveText('Format');
+  await expect(page.locator('#browse-button')).toHaveText('Browse');
+});
+
+test('locale selection persists across page reload', async ({ page }) => {
+  await page.goto('/');
+
+  // Switch to pt-BR
+  await page.locator('.locale-btn', { hasText: 'pt-BR' }).click();
+  await expect(page.locator('#run-button')).toHaveText('Executar');
+
+  // Reload
+  await page.reload();
+
+  // Should still be Portuguese
+  await expect(page.locator('#run-button')).toHaveText('Executar', { timeout: 5000 });
+  await expect(page.locator('#browse-button')).toHaveText('Explorar');
+});
