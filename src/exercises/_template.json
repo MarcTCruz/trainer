@@ -1,0 +1,20 @@
+{
+  "id": "your-exercise-id",
+  "variantOf": null,
+  "variantOrder": 1,
+  "variantPrompt": null,
+  "title": "Your Exercise Title",
+  "difficulty": "Medium",
+  "description": "Describe the problem.\n\nUse backticks for `code` and **bold** for emphasis.",
+  "functionName": "yourFunction",
+  "params": ["input"],
+  "starterCode": "function yourFunction(input) {\n  // Your solution here\n  \n}",
+  "testCases": [
+    { "input": ["example"], "expected": "result" },
+    { "input": ["edge-case"], "expected": "result" }
+  ],
+  "hints": [
+    "Think about the data structure",
+    "Consider edge cases"
+  ]
+}
