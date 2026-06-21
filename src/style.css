@@ -905,3 +905,63 @@ body {
     width: 100%;
   }
 }
+
+/* CI verification toggle */
+.ci-toggle-section {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-left: 12px;
+  padding-left: 12px;
+  border-left: 1px solid var(--border);
+}
+
+.ci-toggle-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+
+.ci-toggle-input {
+  width: 14px;
+  height: 14px;
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+
+.ci-disclaimer {
+  font-size: 0.7rem;
+  color: var(--warning);
+  margin: 0;
+  max-width: 180px;
+  line-height: 1.3;
+}
+
+/* CI verification badges */
+.ci-badge {
+  display: inline-block;
+  font-size: 0.7rem;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-weight: 500;
+  margin-left: 8px;
+  vertical-align: middle;
+}
+
+.ci-badge-pass {
+  background: var(--success);
+  color: #0a0a1a;
+}
+
+.ci-badge-fail {
+  background: var(--error);
+  color: #0a0a1a;
+}
+
+.ci-badge-local {
+  background: var(--border);
+  color: var(--text-primary);
+}

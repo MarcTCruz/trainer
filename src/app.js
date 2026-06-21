@@ -86,6 +86,28 @@ function loadExercise(id, keepCode = false) {
   elements.difficulty.dataset.level = exercise.difficulty.toLowerCase();
   elements.description.innerHTML = formatDescription(exercise.description);
 
+  const existingBadge = document.querySelector('.ci-badge');
+  if (existingBadge) existingBadge.remove();
+
+  const ciResults = get(CI_RESULTS_KEY);
+  const ciStatus = ciResults?.exercises?.[exercise.id];
+  const progress = getProgress();
+
+  const badgeConfig = ciStatus?.status === 'pass'
+    ? { cls: 'ci-badge-pass', text: '✓ CI Verified' }
+    : ciStatus?.status === 'fail'
+    ? { cls: 'ci-badge-fail', text: '✗ CI Failed' }
+    : (!ciStatus && progress.completedExercises[exercise.id])
+    ? { cls: 'ci-badge-local', text: '✓ Local' }
+    : null;
+
+  if (badgeConfig) {
+    const badge = document.createElement('span');
+    badge.className = `ci-badge ${badgeConfig.cls}`;
+    badge.textContent = badgeConfig.text;
+    elements.title.parentElement.appendChild(badge);
+  }
+
   if (!keepCode) {
     const savedCode = getSavedCode(exercise.id);
     if (editor) {
@@ -455,6 +477,36 @@ function renderAuthState() {
       container.appendChild(username);
       section.appendChild(container);
       section.appendChild(signOut);
+
+      const ciSection = document.createElement('div');
+      ciSection.className = 'ci-toggle-section';
+
+      const ciLabel = document.createElement('label');
+      ciLabel.className = 'ci-toggle-label';
+
+      const ciCheckbox = document.createElement('input');
+      ciCheckbox.type = 'checkbox';
+      ciCheckbox.className = 'ci-toggle-input';
+      ciCheckbox.id = 'ci-toggle';
+      ciCheckbox.checked = Boolean(get(CI_ENABLED_KEY));
+
+      const ciText = document.createElement('span');
+      ciText.textContent = 'CI Verification';
+
+      ciLabel.appendChild(ciCheckbox);
+      ciLabel.appendChild(ciText);
+      ciSection.appendChild(ciLabel);
+
+      const ciDisclaimer = document.createElement('p');
+      ciDisclaimer.className = 'ci-disclaimer';
+      ciDisclaimer.id = 'ci-disclaimer';
+      ciDisclaimer.textContent = 'Solutions will be visible on your public fork.';
+      ciDisclaimer.style.display = get(CI_ENABLED_KEY) ? 'block' : 'none';
+      ciSection.appendChild(ciDisclaimer);
+
+      ciCheckbox.addEventListener('change', () => handleCIToggle(ciCheckbox.checked, ciDisclaimer));
+
+      section.appendChild(ciSection);
     }
   } else {
     const signIn = document.createElement('button');
@@ -505,6 +557,18 @@ async function handleConnect() {
 function handleSignOut() {
   clearToken();
   renderAuthState();
+}
+
+function handleCIToggle(enabled, disclaimerEl) {
+  set(CI_ENABLED_KEY, enabled);
+  disclaimerEl.style.display = enabled ? 'block' : 'none';
+  if (!enabled) return;
+  const token = getToken();
+  const user = getSavedUser();
+  if (token && user) {
+    ensureFork(token, user.login)
+      .catch(err => console.warn('Fork creation failed:', err.message));
+  }
 }
 
 function toggleSidebar() {
