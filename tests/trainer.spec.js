@@ -1127,3 +1127,194 @@ test('localStorage data migrates to IndexedDB on first load', async ({ page }) =
   const lsValue = await page.evaluate(() => localStorage.getItem('trainer_v1'));
   expect(lsValue).toBeNull();
 });
+
+// ---------------------------------------------------------------------------
+// GitHub sync flow
+// ---------------------------------------------------------------------------
+
+async function mockGitHubSync(page, { repoExists = true, progressData = null } = {}) {
+  // Mock /user for auth
+  await page.route('https://api.github.com/user', route =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({ login: 'testuser', avatar_url: 'https://avatars.githubusercontent.com/u/1?v=4', name: 'Test User' })
+    })
+  );
+
+  // Mock repo check
+  await page.route('https://api.github.com/repos/testuser/refactory-solutions', route => {
+    if (route.request().method() === 'GET') {
+      return route.fulfill({ status: repoExists ? 200 : 404, contentType: 'application/json', body: JSON.stringify(repoExists ? { name: 'refactory-solutions' } : { message: 'Not Found' }) });
+    }
+    return route.continue();
+  });
+
+  // Mock repo creation
+  await page.route('https://api.github.com/user/repos', route =>
+    route.fulfill({ status: 201, contentType: 'application/json', body: JSON.stringify({ name: 'refactory-solutions' }) })
+  );
+
+  // Mock contents API (solutions and progress.json) — catch-all for GET and PUT
+  await page.route('https://api.github.com/repos/testuser/refactory-solutions/contents/**', route => {
+    const method = route.request().method();
+    const url = route.request().url();
+
+    if (method === 'GET') {
+      // If progressData is provided and this is progress.json GET, return it
+      if (url.includes('progress.json') && progressData) {
+        const encoded = btoa(JSON.stringify(progressData));
+        return route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify({ content: encoded, sha: 'abc123' })
+        });
+      }
+      // Otherwise 404 (no existing file)
+      return route.fulfill({ status: 404, contentType: 'application/json', body: JSON.stringify({ message: 'Not Found' }) });
+    }
+
+    if (method === 'PUT') {
+      return route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ content: { sha: 'newsha123' } })
+      });
+    }
+
+    return route.continue();
+  });
+}
+
+test('solving exercise while authenticated triggers push to GitHub', async ({ page }) => {
+  await mockGitHubSync(page);
+
+  // Set up request watchers BEFORE navigating so no race with early requests
+  const solutionPutPromise = page.waitForRequest(
+    req => req.url().includes('/contents/solutions/') && req.method() === 'PUT',
+    { timeout: 15000 }
+  );
+  const progressPutPromise = page.waitForRequest(
+    req => req.url().includes('/contents/progress.json') && req.method() === 'PUT',
+    { timeout: 15000 }
+  );
+
+  await page.goto('/');
+
+  // Sign in
+  await page.locator('#sign-in-button').click();
+  await page.locator('#token-input').fill('ghp_validtoken123');
+  await page.locator('#auth-connect-button').click();
+  await expect(page.locator('#auth-username')).toContainText('testuser', { timeout: 5000 });
+
+  // Solve the exercise
+  await pasteCode(page, CORRECT_SOLUTION);
+  await page.locator('#run-button').click();
+
+  await expect(page.locator('#status-message')).toContainText('All tests passed', { timeout: 15000 });
+
+  // Verify both PUT requests were made
+  await solutionPutPromise;
+  await progressPutPromise;
+});
+
+test('login with existing remote progress merges and updates display', async ({ page }) => {
+  const progressData = {
+    completedExercises: { 'min-stack': { code: 'remote code', solvedAt: '2026-06-15T00:00:00.000Z' } },
+    xp: 200,
+    streak: 3,
+    lastActiveDate: '2026-06-15'
+  };
+
+  await mockGitHubSync(page, { progressData });
+
+  // Watch for the merged progress.json push that confirms syncOnLogin completed
+  const progressPutPromise = page.waitForRequest(
+    req => req.url().includes('/contents/progress.json') && req.method() === 'PUT',
+    { timeout: 15000 }
+  );
+
+  await page.goto('/');
+
+  // Sign in — syncOnLogin fires in the background after modal closes
+  await page.locator('#sign-in-button').click();
+  await page.locator('#token-input').fill('ghp_validtoken123');
+  await page.locator('#auth-connect-button').click();
+  await expect(page.locator('#auth-username')).toContainText('testuser', { timeout: 5000 });
+
+  // Wait for sync to push the merged state back
+  await progressPutPromise;
+
+  // After sync, the remote exercise and XP should be reflected in the display
+  await expect(page.locator('#solved-value')).toHaveText('1', { timeout: 5000 });
+  await expect(page.locator('#xp-value')).toHaveText('200');
+});
+
+test('sync errors do not break the app', async ({ page }) => {
+  // Mock /user for auth (success)
+  await page.route('https://api.github.com/user', route =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({ login: 'testuser', avatar_url: 'https://avatars.githubusercontent.com/u/1?v=4', name: 'Test User' })
+    })
+  );
+
+  // All sync endpoints return 500
+  await page.route('https://api.github.com/repos/testuser/**', route =>
+    route.fulfill({ status: 500, contentType: 'application/json', body: JSON.stringify({ message: 'Internal Server Error' }) })
+  );
+  await page.route('https://api.github.com/user/repos', route =>
+    route.fulfill({ status: 500, contentType: 'application/json', body: JSON.stringify({ message: 'Internal Server Error' }) })
+  );
+
+  await page.goto('/');
+
+  // Sign in
+  await page.locator('#sign-in-button').click();
+  await page.locator('#token-input').fill('ghp_validtoken123');
+  await page.locator('#auth-connect-button').click();
+  await expect(page.locator('#auth-username')).toContainText('testuser', { timeout: 5000 });
+
+  // Solve the exercise — sync will fail silently
+  await pasteCode(page, CORRECT_SOLUTION);
+  await page.locator('#run-button').click();
+
+  // App still reports success
+  await expect(page.locator('#status-message')).toContainText('All tests passed', { timeout: 15000 });
+
+  // Progress still updated locally
+  await expect(page.locator('#solved-value')).not.toHaveText('0', { timeout: 5000 });
+});
+
+test('repo creation attempted on first push when repo does not exist', async ({ page }) => {
+  await mockGitHubSync(page, { repoExists: false });
+
+  // Watch for repo creation POST BEFORE navigating
+  const repoCreatePromise = page.waitForRequest(
+    req => req.url() === 'https://api.github.com/user/repos' && req.method() === 'POST',
+    { timeout: 15000 }
+  );
+  const solutionPutPromise = page.waitForRequest(
+    req => req.url().includes('/contents/solutions/') && req.method() === 'PUT',
+    { timeout: 15000 }
+  );
+
+  await page.goto('/');
+
+  // Sign in
+  await page.locator('#sign-in-button').click();
+  await page.locator('#token-input').fill('ghp_validtoken123');
+  await page.locator('#auth-connect-button').click();
+  await expect(page.locator('#auth-username')).toContainText('testuser', { timeout: 5000 });
+
+  // Solve the exercise
+  await pasteCode(page, CORRECT_SOLUTION);
+  await page.locator('#run-button').click();
+
+  await expect(page.locator('#status-message')).toContainText('All tests passed', { timeout: 15000 });
+
+  // Verify repo creation was attempted then solution was pushed
+  await repoCreatePromise;
+  await solutionPutPromise;
+});

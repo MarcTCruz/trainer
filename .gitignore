@@ -6,4 +6,6 @@ coverage/
 .env
 .codegraph/
 _tracker/
+docs/superpowers/
+test-results/
 .pnpm-approve-builds.json

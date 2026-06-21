@@ -9,6 +9,7 @@ import {
   isAuthenticated,
   GITHUB_TOKEN_URL
 } from './github-auth.js';
+import { ensureRepo, pushSolution, pushProgress, syncOnLogin } from './github-sync.js';
 import { runExercise, ensureQuickJS } from './runner.js';
 import { markSolved, getProgress, getSavedCode } from './progress.js';
 import {
@@ -308,6 +309,18 @@ async function handleRun() {
 
     if (result.allPassed) {
       markSolved(currentExercise.id, userCode);
+      if (isAuthenticated()) {
+        const token = getToken();
+        const user = getSavedUser();
+        if (token && user) {
+          ensureRepo(token, user.login)
+            .then(() => Promise.all([
+              pushSolution(token, user.login, currentExercise.id, userCode),
+              pushProgress(token, user.login, getProgress())
+            ]))
+            .catch(err => console.warn('Sync failed:', err.message));
+        }
+      }
       updateProgressDisplay();
       renderStepper();
       renderRibbon();
@@ -461,6 +474,12 @@ async function handleConnect() {
     saveToken(token);
     closeAuthModal();
     renderAuthState();
+    const user = getSavedUser();
+    if (user) {
+      syncOnLogin(getToken(), user.login)
+        .then(() => updateProgressDisplay())
+        .catch(err => console.warn('Sync on login failed:', err.message));
+    }
   } catch {
     elements.authError.textContent = 'Invalid token — check that you copied the full string.';
   } finally {
@@ -648,6 +667,19 @@ async function boot() {
   await initStorage();
   loadExercise(resolveStartExercise());
   renderAuthState();
+  if (isAuthenticated()) {
+    const token = getToken();
+    const user = getSavedUser();
+    if (token && user) {
+      syncOnLogin(token, user.login)
+        .then(() => {
+          updateProgressDisplay();
+          renderStepper();
+          renderRibbon();
+        })
+        .catch(err => console.warn('Sync on boot failed:', err.message));
+    }
+  }
 }
 
 boot();
