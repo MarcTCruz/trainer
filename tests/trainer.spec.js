@@ -1562,6 +1562,50 @@ test('locale selector switches UI to Portuguese and back to English', async ({ p
   await expect(page.locator('#browse-button')).toHaveText('Browse');
 });
 
+test('i18n: every text-setting line in source uses t() or is exempt', async () => {
+  const { readFileSync } = await import('fs');
+  const { join } = await import('path');
+
+  const TEXT_SETTERS = /\.(textContent|innerText|placeholder)\s*=\s*/;
+  const ARIA_LABEL = /setAttribute\(\s*['"]aria-label['"]\s*,/;
+  const USES_T = /\bt\(/;
+  const EMPTY_STRING = /=\s*['"]['"]\s*;?\s*$/;
+  const EXEMPT_PATTERNS = [
+    /icon\.textContent/,
+    /\.textContent\s*=\s*exercise\./,
+    /\.textContent\s*=\s*progress\./,
+    /\.textContent\s*=\s*cluster\./,
+    /\.textContent\s*=\s*user\./,
+    /\.textContent\s*=\s*locale/,
+    /\.textContent\s*=\s*badgeConfig/,
+    /\.textContent\s*=\s*currentExercise\./,
+    /div\.textContent\s*=\s*str/,
+    /progressSpan\.textContent/,
+    /Object\.keys\(/,
+    /\.textContent\s*=\s*`\$\{/,
+    /variantPrompt/,
+  ];
+
+  const files = ['src/app.js', 'src/runner.js'];
+  const violations = [];
+
+  for (const file of files) {
+    const lines = readFileSync(join(process.cwd(), file), 'utf-8').split('\n');
+    lines.forEach((line, idx) => {
+      const trimmed = line.trim();
+      const isTextSetter = TEXT_SETTERS.test(trimmed) || ARIA_LABEL.test(trimmed);
+      if (!isTextSetter) return;
+      const block = lines.slice(idx, idx + 4).join(' ');
+      if (USES_T.test(block)) return;
+      if (EMPTY_STRING.test(trimmed)) return;
+      if (EXEMPT_PATTERNS.some(p => p.test(block))) return;
+      violations.push(`${file}:${idx + 1}: ${trimmed}`);
+    });
+  }
+
+  expect(violations, `Text-setting lines not using t(): ${violations.join('\n')}`).toEqual([]);
+});
+
 test('locale selection persists across page reload', async ({ page }) => {
   await page.goto('/');
 
