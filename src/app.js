@@ -510,6 +510,22 @@ function renderAuthState() {
       section.appendChild(container);
       section.appendChild(signOut);
 
+      if (get(CI_CONSENT_KEY)) {
+        const shareBtn = document.createElement('button');
+        shareBtn.className = 'btn btn-ghost';
+        shareBtn.id = 'share-verification-button';
+        shareBtn.type = 'button';
+        shareBtn.textContent = t('share.button');
+        shareBtn.addEventListener('click', () => {
+          const url = `https://github.com/MarcTCruz/refactory-validator/blob/main/results/${user.login}.json`;
+          navigator.clipboard.writeText(url).then(() => {
+            shareBtn.textContent = t('share.copied');
+            setTimeout(() => { shareBtn.textContent = t('share.button'); }, 2000);
+          });
+        });
+        section.appendChild(shareBtn);
+      }
+
     }
   } else {
     const signIn = document.createElement('button');

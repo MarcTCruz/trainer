@@ -65,5 +65,7 @@
   "leaderboard.close": "Close",
   "leaderboard.empty": "No verified users yet.",
   "leaderboard.refresh": "Refresh",
-  "leaderboard.refreshing": "Refreshing..."
+  "leaderboard.refreshing": "Refreshing...",
+  "share.button": "Share Proof",
+  "share.copied": "Link copied!"
 }

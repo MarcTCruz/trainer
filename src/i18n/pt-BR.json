@@ -65,5 +65,7 @@
   "leaderboard.close": "Fechar",
   "leaderboard.empty": "Nenhum usuário verificado ainda.",
   "leaderboard.refresh": "Atualizar",
-  "leaderboard.refreshing": "Atualizando..."
+  "leaderboard.refreshing": "Atualizando...",
+  "share.button": "Compartilhar Prova",
+  "share.copied": "Link copiado!"
 }
