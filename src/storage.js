@@ -95,3 +95,10 @@ export function remove(key) {
   cache.delete(key);
   if (db) idbDelete(key);
 }
+
+export function clearAll() {
+  cache.clear();
+  if (!db) return;
+  const tx = db.transaction(STORE_NAME, 'readwrite');
+  tx.objectStore(STORE_NAME).clear();
+}

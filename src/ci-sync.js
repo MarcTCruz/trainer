@@ -101,6 +101,13 @@ export async function pushSolutionToFork(token, owner, exerciseId, code) {
   return putRes.json();
 }
 
+export async function deleteFork(token, owner) {
+  const res = await githubFetch(token, `/repos/${owner}/${VALIDATOR_REPO}`, { method: 'DELETE' });
+  if (res.status === 404) return;
+  if (!res.ok) throw new CISyncError('deleteFork failed', res.status);
+  sessionStorage.removeItem(FORK_CACHE_KEY);
+}
+
 export async function fetchCIResults(username) {
   const url =
     `https://raw.githubusercontent.com/${VALIDATOR_OWNER}/${VALIDATOR_REPO}/main/results/${username}.json` +

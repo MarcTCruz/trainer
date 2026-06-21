@@ -1,4 +1,4 @@
-import { init as initStorage, get, set } from './storage.js';
+import { init as initStorage, get, set, clearAll } from './storage.js';
 import { createEditor, getCode, setCode, onFormat } from './editor.js';
 import {
   saveToken,
@@ -9,8 +9,8 @@ import {
   isAuthenticated,
   GITHUB_TOKEN_URL
 } from './github-auth.js';
-import { ensureRepo, pushSolution, pushProgress, syncOnLogin } from './github-sync.js';
-import { ensureFork, pushSolutionToFork, fetchCIResults } from './ci-sync.js';
+import { ensureRepo, pushSolution, pushProgress, syncOnLogin, setRepoVisibility, pushReadme } from './github-sync.js';
+import { ensureFork, pushSolutionToFork, fetchCIResults, deleteFork } from './ci-sync.js';
 import { initI18n, t, getLocale, setLocale, SUPPORTED_LOCALES } from './i18n.js';
 import { runExercise, ensureQuickJS } from './runner.js';
 import { markSolved, getProgress, getSavedCode, normalizeCode, addBonusXp } from './progress.js';
@@ -29,6 +29,7 @@ import { fetchLeaderboard, LEADERBOARD_KEY } from './leaderboard.js';
 const CI_CONSENT_KEY = 'trainer_ci_consent';
 const CI_PENDING_KEY = 'trainer_ci_pending';
 const CI_RESULTS_KEY = 'trainer_ci_results';
+const REPO_PUBLIC_KEY = 'trainer_repo_public';
 
 const elements = {
   title: document.getElementById('exercise-title'),
@@ -580,64 +581,217 @@ function closeAuthModal() {
   elements.authModalBackdrop.classList.remove('open');
 }
 
+function makeButton(id, className, labelKey) {
+  const btn = document.createElement('button');
+  btn.className = className;
+  btn.id = id;
+  btn.type = 'button';
+  btn.textContent = t(labelKey);
+  return btn;
+}
+
+function renderVisibilityToggle(section, token, user) {
+  const isPublic = !!get(REPO_PUBLIC_KEY);
+  const toggleBtn = makeButton(
+    'visibility-toggle-button',
+    'btn btn-ghost',
+    isPublic ? 'share.makePrivate' : 'share.makePublic',
+  );
+
+  toggleBtn.addEventListener('click', async () => {
+    const nowPublic = !get(REPO_PUBLIC_KEY);
+    toggleBtn.disabled = true;
+    toggleBtn.textContent = t(nowPublic ? 'share.makingPublic' : 'share.makingPrivate');
+    try {
+      await setRepoVisibility(token, user.login, nowPublic);
+      if (nowPublic) await pushReadme(token, user.login, getProgress());
+      set(REPO_PUBLIC_KEY, nowPublic ? true : null);
+      renderAuthState();
+    } catch (err) {
+      console.warn('setRepoVisibility failed:', err.message);
+      toggleBtn.disabled = false;
+      toggleBtn.textContent = t(isPublic ? 'share.makePrivate' : 'share.makePublic');
+    }
+  });
+
+  section.appendChild(toggleBtn);
+
+  if (!isPublic) return;
+
+  const shareLink = makeButton('share-solutions-button', 'btn btn-ghost', 'share.shareLink');
+  shareLink.addEventListener('click', () => {
+    const url = `https://github.com/${user.login}/refactory-solutions`;
+    navigator.clipboard.writeText(url).then(() => {
+      shareLink.textContent = t('share.linkCopied');
+      setTimeout(() => { shareLink.textContent = t('share.shareLink'); }, 2000);
+    });
+  });
+  section.appendChild(shareLink);
+}
+
+function renderClearDataButton(section, token, user) {
+  const clearBtn = makeButton('clear-data-button', 'btn btn-ghost btn-danger', 'data.clearButton');
+
+  clearBtn.addEventListener('click', () => {
+    renderClearConfirm(section, token, user);
+  });
+
+  section.appendChild(clearBtn);
+}
+
+function renderClearConfirm(section, token, user) {
+  if (document.getElementById('clear-confirm-card')) return;
+
+  const card = document.createElement('div');
+  card.className = 'ci-consent-card';
+  card.id = 'clear-confirm-card';
+
+  const heading = document.createElement('strong');
+  heading.textContent = t('data.clearConfirmHeading');
+
+  const text = document.createElement('p');
+  text.textContent = t('data.clearConfirmText');
+
+  const confirmBtn = document.createElement('button');
+  confirmBtn.className = 'btn btn-ghost btn-danger';
+  confirmBtn.type = 'button';
+  confirmBtn.textContent = t('data.clearConfirmAction');
+  confirmBtn.addEventListener('click', () => handleClearAll(section, token, user));
+
+  const cancelBtn = document.createElement('button');
+  cancelBtn.className = 'btn btn-ghost';
+  cancelBtn.type = 'button';
+  cancelBtn.textContent = t('data.clearConfirmCancel');
+  cancelBtn.addEventListener('click', () => renderAuthState());
+
+  card.appendChild(heading);
+  card.appendChild(text);
+  card.appendChild(confirmBtn);
+  card.appendChild(cancelBtn);
+  section.appendChild(card);
+}
+
+async function handleClearAll(section, token, user) {
+  try {
+    await deleteFork(token, user.login);
+  } catch (err) {
+    console.warn('deleteFork failed (non-fatal):', err.message);
+  }
+
+  if (get(REPO_PUBLIC_KEY)) {
+    try {
+      await setRepoVisibility(token, user.login, false);
+    } catch (err) {
+      console.warn('setRepoVisibility on clear failed (non-fatal):', err.message);
+    }
+  }
+
+  clearAll();
+
+  const msg = document.createElement('div');
+  msg.className = 'clear-done-message';
+
+  const done = document.createElement('p');
+  done.textContent = t('data.clearDone');
+
+  const revokeLink = document.createElement('a');
+  revokeLink.href = 'https://github.com/settings/tokens';
+  revokeLink.target = '_blank';
+  revokeLink.rel = 'noopener noreferrer';
+  revokeLink.textContent = t('data.revokeToken');
+
+  msg.appendChild(done);
+  msg.appendChild(revokeLink);
+  section.innerHTML = '';
+  section.appendChild(msg);
+}
+
+function renderYourDataButton(section) {
+  const btn = makeButton('your-data-button', 'btn btn-ghost', 'data.yourDataButton');
+  let infoVisible = false;
+
+  const info = document.createElement('div');
+  info.className = 'your-data-info';
+  info.hidden = true;
+
+  const lines = [
+    'data.browserStorage',
+    'data.githubRepos',
+    'data.retention',
+    'data.deletion',
+  ];
+
+  for (const key of lines) {
+    const p = document.createElement('p');
+    p.textContent = t(key);
+    info.appendChild(p);
+  }
+
+  btn.addEventListener('click', () => {
+    infoVisible = !infoVisible;
+    info.hidden = !infoVisible;
+  });
+
+  section.appendChild(btn);
+  section.appendChild(info);
+}
+
 function renderAuthState() {
   const section = elements.authSection;
   section.innerHTML = '';
 
-  if (isAuthenticated()) {
-    const user = getSavedUser();
-    if (user) {
-      const container = document.createElement('div');
-      container.className = 'auth-user';
-
-      const avatar = document.createElement('img');
-      avatar.className = 'auth-avatar';
-      avatar.src = user.avatar_url;
-      avatar.alt = user.login;
-
-      const username = document.createElement('span');
-      username.className = 'auth-username';
-      username.id = 'auth-username';
-      username.textContent = user.login;
-
-      const signOut = document.createElement('button');
-      signOut.className = 'btn btn-ghost';
-      signOut.id = 'sign-out-button';
-      signOut.type = 'button';
-      signOut.textContent = t('auth.signOut');
-      signOut.addEventListener('click', handleSignOut);
-
-      container.appendChild(avatar);
-      container.appendChild(username);
-      section.appendChild(container);
-      section.appendChild(signOut);
-
-      if (get(CI_CONSENT_KEY)) {
-        const shareBtn = document.createElement('button');
-        shareBtn.className = 'btn btn-ghost';
-        shareBtn.id = 'share-verification-button';
-        shareBtn.type = 'button';
-        shareBtn.textContent = t('share.button');
-        shareBtn.addEventListener('click', () => {
-          const url = `https://github.com/MarcTCruz/refactory-validator/blob/main/results/${user.login}.json`;
-          navigator.clipboard.writeText(url).then(() => {
-            shareBtn.textContent = t('share.copied');
-            setTimeout(() => { shareBtn.textContent = t('share.button'); }, 2000);
-          });
-        });
-        section.appendChild(shareBtn);
-      }
-
-    }
-  } else {
-    const signIn = document.createElement('button');
-    signIn.className = 'btn btn-ghost';
-    signIn.id = 'sign-in-button';
-    signIn.type = 'button';
-    signIn.textContent = t('auth.signIn');
+  if (!isAuthenticated()) {
+    const signIn = makeButton('sign-in-button', 'btn btn-ghost', 'auth.signIn');
     signIn.addEventListener('click', openAuthModal);
     section.appendChild(signIn);
+    return;
   }
+
+  const user = getSavedUser();
+  if (!user) return;
+
+  const container = document.createElement('div');
+  container.className = 'auth-user';
+
+  const avatar = document.createElement('img');
+  avatar.className = 'auth-avatar';
+  avatar.src = user.avatar_url;
+  avatar.alt = user.login;
+
+  const username = document.createElement('span');
+  username.className = 'auth-username';
+  username.id = 'auth-username';
+  username.textContent = user.login;
+
+  container.appendChild(avatar);
+  container.appendChild(username);
+  section.appendChild(container);
+
+  const actions = document.createElement('div');
+  actions.className = 'auth-actions';
+
+  const signOut = makeButton('sign-out-button', 'btn btn-ghost', 'auth.signOut');
+  signOut.addEventListener('click', handleSignOut);
+  actions.appendChild(signOut);
+
+  if (get(CI_CONSENT_KEY)) {
+    const shareBtn = makeButton('share-verification-button', 'btn btn-ghost', 'share.button');
+    shareBtn.addEventListener('click', () => {
+      const url = `https://github.com/MarcTCruz/refactory-validator/blob/main/results/${user.login}.json`;
+      navigator.clipboard.writeText(url).then(() => {
+        shareBtn.textContent = t('share.copied');
+        setTimeout(() => { shareBtn.textContent = t('share.button'); }, 2000);
+      });
+    });
+    actions.appendChild(shareBtn);
+  }
+
+  const token = getToken();
+  renderVisibilityToggle(actions, token, user);
+  renderClearDataButton(actions, token, user);
+  renderYourDataButton(actions);
+
+  section.appendChild(actions);
 }
 
 async function handleConnect() {
