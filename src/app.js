@@ -21,6 +21,7 @@ import {
   getCluster,
   getAllClusters
 } from './exercise-loader.js';
+import { fetchAggregateResults, computeCalibration, CALIBRATION_KEY } from './difficulty-calibration.js';
 
 const CI_ENABLED_KEY = 'trainer_ci_enabled';
 const CI_RESULTS_KEY = 'trainer_ci_results';
@@ -85,6 +86,11 @@ function loadExercise(id, keepCode = false) {
   elements.title.textContent = exercise.title;
   elements.difficulty.textContent = exercise.difficulty;
   elements.difficulty.dataset.level = exercise.difficulty.toLowerCase();
+  const calibrated = get(CALIBRATION_KEY);
+  if (calibrated?.[exercise.id]) {
+    elements.difficulty.textContent = calibrated[exercise.id];
+    elements.difficulty.dataset.level = calibrated[exercise.id].toLowerCase();
+  }
   elements.description.innerHTML = formatDescription(exercise.description);
 
   const existingBadge = document.querySelector('.ci-badge');
@@ -836,6 +842,13 @@ async function boot() {
       }
     }
   }
+  fetchAggregateResults()
+    .then(results => {
+      if (!results) return;
+      const calibrated = computeCalibration(results);
+      set(CALIBRATION_KEY, calibrated);
+    })
+    .catch(err => console.warn('Calibration fetch failed:', err.message));
 }
 
 boot();

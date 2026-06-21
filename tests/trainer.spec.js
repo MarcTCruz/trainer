@@ -1584,6 +1584,7 @@ test('i18n: every text-setting line in source uses t() or is exempt', async () =
     /Object\.keys\(/,
     /\.textContent\s*=\s*`\$\{/,
     /variantPrompt/,
+    /\.textContent\s*=\s*calibrated\[/,
   ];
 
   const files = ['src/app.js', 'src/runner.js'];
