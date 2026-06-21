@@ -1323,10 +1323,10 @@ test('repo creation attempted on first push when repo does not exist', async ({ 
 // CI sync flow
 // ---------------------------------------------------------------------------
 
-test('CI toggle shows privacy disclaimer when enabled', async ({ page }) => {
+test('CI consent prompt appears after first local solve', async ({ page }) => {
   await mockGitHubSync(page);
 
-  // Mock fork check (the toggle triggers ensureFork)
+  // Mock fork check
   await page.route('https://api.github.com/repos/testuser/refactory-validator', route =>
     route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ name: 'refactory-validator' }) })
   );
@@ -1339,24 +1339,25 @@ test('CI toggle shows privacy disclaimer when enabled', async ({ page }) => {
   await page.locator('#auth-connect-button').click();
   await expect(page.locator('#auth-username')).toContainText('testuser', { timeout: 5000 });
 
-  // Toggle should be visible but unchecked
-  const toggle = page.locator('#ci-toggle');
-  await expect(toggle).toBeVisible();
-  await expect(toggle).not.toBeChecked();
+  // No consent prompt yet
+  await expect(page.locator('#ci-consent-prompt')).not.toBeAttached();
 
-  // Disclaimer should be hidden
-  const disclaimer = page.locator('#ci-disclaimer');
-  await expect(disclaimer).toBeHidden();
+  // Solve the exercise to trigger the consent prompt
+  await pasteCode(page, CORRECT_SOLUTION);
+  await page.locator('#run-button').click();
+  await expect(page.locator('#status-message')).toContainText('All tests passed', { timeout: 15000 });
 
-  // Enable CI
-  await toggle.check();
+  // Consent prompt should appear
+  await expect(page.locator('#ci-consent-prompt')).toBeVisible({ timeout: 5000 });
+  await expect(page.locator('.ci-consent-card h3')).toContainText('official');
+  await expect(page.locator('.ci-consent-card p')).toContainText('public fork');
 
-  // Disclaimer should be visible
-  await expect(disclaimer).toBeVisible();
-  await expect(disclaimer).toContainText('public fork');
+  // Decline — prompt disappears, no consent stored
+  await page.locator('.ci-consent-actions .btn-secondary').click();
+  await expect(page.locator('#ci-consent-prompt')).not.toBeAttached();
 });
 
-test('solving with CI enabled pushes solution to fork', async ({ page }) => {
+test('accepting CI consent pushes solution to fork', async ({ page }) => {
   await mockGitHubSync(page);
 
   // Mock fork check
@@ -1388,19 +1389,20 @@ test('solving with CI enabled pushes solution to fork', async ({ page }) => {
   await page.locator('#auth-connect-button').click();
   await expect(page.locator('#auth-username')).toContainText('testuser', { timeout: 5000 });
 
-  // Enable CI
-  await page.locator('#ci-toggle').check();
-
   // Set up watcher for fork push BEFORE solving
   const forkPushPromise = page.waitForRequest(
     req => req.url().includes('/repos/testuser/refactory-validator/contents/solutions/') && req.method() === 'PUT',
     { timeout: 15000 }
   );
 
-  // Solve the exercise
+  // Solve the exercise — consent prompt appears
   await pasteCode(page, CORRECT_SOLUTION);
   await page.locator('#run-button').click();
   await expect(page.locator('#status-message')).toContainText('All tests passed', { timeout: 15000 });
+
+  // Accept the consent prompt to trigger CI push
+  await expect(page.locator('#ci-consent-prompt')).toBeVisible({ timeout: 5000 });
+  await page.locator('.ci-consent-actions .btn-primary').click();
 
   // Verify fork push was made
   const forkPush = await forkPushPromise;
@@ -1431,8 +1433,19 @@ test('CI results display verification badges', async ({ page }) => {
   await page.locator('#auth-connect-button').click();
   await expect(page.locator('#auth-username')).toContainText('testuser', { timeout: 5000 });
 
-  // Enable CI toggle (persists trainer_ci_enabled to IndexedDB)
-  await page.locator('#ci-toggle').check();
+  // Seed CI consent into IndexedDB so boot treats CI as enabled
+  await page.evaluate(() => {
+    return new Promise((resolve, reject) => {
+      const req = indexedDB.open('trainer-db', 1);
+      req.onsuccess = () => {
+        const tx = req.result.transaction('kv', 'readwrite');
+        tx.objectStore('kv').put(true, 'trainer_ci_consent');
+        tx.oncomplete = resolve;
+        tx.onerror = () => reject(tx.error);
+      };
+      req.onerror = () => reject(req.error);
+    });
+  });
 
   // Write CI results directly into IndexedDB so boot finds them immediately on reload
   await page.evaluate(results => {
@@ -1455,8 +1468,8 @@ test('CI results display verification badges', async ({ page }) => {
   await expect(page.locator('#auth-username')).toContainText('testuser', { timeout: 5000 });
 
   // Badge should be visible because CI results were pre-seeded before boot
-  await expect(page.locator('.ci-badge-pass')).toBeVisible({ timeout: 5000 });
-  await expect(page.locator('.ci-badge-pass')).toContainText('CI Verified');
+  await expect(page.locator('.ci-badge-verified')).toBeVisible({ timeout: 5000 });
+  await expect(page.locator('.ci-badge-verified')).toContainText('Verified');
 });
 
 test('CI sync errors do not break solving', async ({ page }) => {
@@ -1485,8 +1498,19 @@ test('CI sync errors do not break solving', async ({ page }) => {
   await page.locator('#auth-connect-button').click();
   await expect(page.locator('#auth-username')).toContainText('testuser', { timeout: 5000 });
 
-  // Enable CI (will try to ensureFork, which will fail silently)
-  await page.locator('#ci-toggle').check();
+  // Seed CI consent so pushToCI is attempted (will fail silently due to mocked 500s)
+  await page.evaluate(() => {
+    return new Promise((resolve, reject) => {
+      const req = indexedDB.open('trainer-db', 1);
+      req.onsuccess = () => {
+        const tx = req.result.transaction('kv', 'readwrite');
+        tx.objectStore('kv').put(true, 'trainer_ci_consent');
+        tx.oncomplete = resolve;
+        tx.onerror = () => reject(tx.error);
+      };
+      req.onerror = () => reject(req.error);
+    });
+  });
 
   // Solve the exercise — CI sync will fail silently but solve still works
   await pasteCode(page, CORRECT_SOLUTION);
@@ -1587,6 +1611,7 @@ test('i18n: every text-setting line in source uses t() or is exempt', async () =
     /\.textContent\s*=\s*calibrated\[/,
     /rank\.textContent/,
     /userLink\.textContent/,
+    /solvedDisplay\.textContent/,
   ];
 
   const files = ['src/app.js', 'src/runner.js'];

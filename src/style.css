@@ -906,40 +906,6 @@ body {
   }
 }
 
-/* CI verification toggle */
-.ci-toggle-section {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  margin-left: 12px;
-  padding-left: 12px;
-  border-left: 1px solid var(--border);
-}
-
-.ci-toggle-label {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 0.8rem;
-  color: var(--text-secondary);
-  cursor: pointer;
-}
-
-.ci-toggle-input {
-  width: 14px;
-  height: 14px;
-  accent-color: var(--accent);
-  cursor: pointer;
-}
-
-.ci-disclaimer {
-  font-size: 0.7rem;
-  color: var(--warning);
-  margin: 0;
-  max-width: 180px;
-  line-height: 1.3;
-}
-
 /* CI verification badges */
 .ci-badge {
   display: inline-block;
@@ -949,21 +915,85 @@ body {
   font-weight: 500;
   margin-left: 8px;
   vertical-align: middle;
+  border: 1.5px solid transparent;
+  transition: all 0.3s ease;
 }
 
-.ci-badge-pass {
-  background: var(--success);
-  color: #0a0a1a;
+.ci-badge-solved {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: rgba(100, 255, 218, 0.08);
+}
+
+.ci-badge-pending {
+  border-color: var(--warning);
+  color: var(--warning);
+  background: rgba(255, 183, 77, 0.08);
+  animation: badge-pulse 2s infinite;
+}
+
+.ci-badge-verified {
+  background: rgba(102, 187, 106, 0.15);
+  color: var(--success);
+  border-color: var(--success);
+  animation: verified-glow 1.5s ease-out;
 }
 
 .ci-badge-fail {
-  background: var(--error);
-  color: #0a0a1a;
+  background: rgba(255, 107, 107, 0.1);
+  color: var(--error);
+  border-color: var(--error);
 }
 
-.ci-badge-local {
-  background: var(--border);
-  color: var(--text-primary);
+@keyframes badge-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+@keyframes verified-glow {
+  0% { box-shadow: 0 0 0 0 rgba(102, 187, 106, 0.4); }
+  70% { box-shadow: 0 0 0 8px rgba(102, 187, 106, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(102, 187, 106, 0); }
+}
+
+/* CI consent prompt */
+.ci-consent-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 300;
+}
+
+.ci-consent-card {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 24px;
+  max-width: 420px;
+  width: 90vw;
+  text-align: center;
+}
+
+.ci-consent-card h3 {
+  font-size: 1.2rem;
+  margin-bottom: 12px;
+  color: var(--accent);
+}
+
+.ci-consent-card p {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  line-height: 1.6;
+  margin-bottom: 20px;
+}
+
+.ci-consent-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
 }
 
 /* Locale selector */

@@ -24,7 +24,8 @@ import {
 import { fetchAggregateResults, computeCalibration, CALIBRATION_KEY } from './difficulty-calibration.js';
 import { fetchLeaderboard, LEADERBOARD_KEY } from './leaderboard.js';
 
-const CI_ENABLED_KEY = 'trainer_ci_enabled';
+const CI_CONSENT_KEY = 'trainer_ci_consent';
+const CI_PENDING_KEY = 'trainer_ci_pending';
 const CI_RESULTS_KEY = 'trainer_ci_results';
 
 const elements = {
@@ -104,15 +105,23 @@ function loadExercise(id, keepCode = false) {
 
   const ciResults = get(CI_RESULTS_KEY);
   const ciStatus = ciResults?.exercises?.[exercise.id];
+  const pending = get(CI_PENDING_KEY) ?? {};
   const progress = getProgress();
+  const isSolvedLocally = Boolean(progress.completedExercises[exercise.id]);
 
-  const badgeConfig = ciStatus?.status === 'pass'
-    ? { cls: 'ci-badge-pass', text: t('ci.badgePass') }
-    : ciStatus?.status === 'fail'
-    ? { cls: 'ci-badge-fail', text: t('ci.badgeFail') }
-    : (!ciStatus && progress.completedExercises[exercise.id])
-    ? { cls: 'ci-badge-local', text: t('ci.badgeLocal') }
-    : null;
+  let badgeConfig = null;
+  if (ciStatus?.status === 'pass') {
+    badgeConfig = { cls: 'ci-badge-verified', text: t('ci.badgeVerified') };
+  }
+  if (!badgeConfig && ciStatus?.status === 'fail') {
+    badgeConfig = { cls: 'ci-badge-fail', text: t('ci.badgeFail') };
+  }
+  if (!badgeConfig && pending[exercise.id] && isSolvedLocally) {
+    badgeConfig = { cls: 'ci-badge-pending', text: t('ci.badgePending') };
+  }
+  if (!badgeConfig && isSolvedLocally) {
+    badgeConfig = { cls: 'ci-badge-solved', text: t('ci.badgeSolved') };
+  }
 
   if (badgeConfig) {
     const badge = document.createElement('span');
@@ -159,7 +168,12 @@ function updateProgressDisplay() {
   const progress = getProgress();
   elements.xpDisplay.textContent = progress.xp;
   elements.streakDisplay.textContent = progress.streak;
-  elements.solvedDisplay.textContent = Object.keys(progress.completedExercises).length;
+  const solvedCount = Object.keys(progress.completedExercises).length;
+  const ciResults = get(CI_RESULTS_KEY);
+  const verifiedCount = ciResults?.exercises
+    ? Object.values(ciResults.exercises).filter(e => e.status === 'pass').length
+    : 0;
+  elements.solvedDisplay.textContent = verifiedCount > 0 ? `${solvedCount} / ${verifiedCount}` : String(solvedCount);
 }
 
 function renderStepper() {
@@ -358,10 +372,15 @@ async function handleRun() {
               pushProgress(token, user.login, getProgress())
             ]))
             .catch(err => console.warn('Sync failed:', err.message));
-          if (get(CI_ENABLED_KEY)) {
-            ensureFork(token, user.login)
-              .then(() => pushSolutionToFork(token, user.login, currentExercise.id, userCode))
-              .catch(err => console.warn('CI sync failed:', err.message));
+          if (get(CI_CONSENT_KEY)) {
+            pushToCI(token, user.login, currentExercise.id, userCode);
+          }
+          if (!get(CI_CONSENT_KEY)) {
+            showCIConsentPrompt(() => {
+              const tkn = getToken();
+              const usr = getSavedUser();
+              if (tkn && usr) pushToCI(tkn, usr.login, currentExercise.id, userCode);
+            });
           }
         }
       }
@@ -491,35 +510,6 @@ function renderAuthState() {
       section.appendChild(container);
       section.appendChild(signOut);
 
-      const ciSection = document.createElement('div');
-      ciSection.className = 'ci-toggle-section';
-
-      const ciLabel = document.createElement('label');
-      ciLabel.className = 'ci-toggle-label';
-
-      const ciCheckbox = document.createElement('input');
-      ciCheckbox.type = 'checkbox';
-      ciCheckbox.className = 'ci-toggle-input';
-      ciCheckbox.id = 'ci-toggle';
-      ciCheckbox.checked = Boolean(get(CI_ENABLED_KEY));
-
-      const ciText = document.createElement('span');
-      ciText.textContent = t('ci.toggle');
-
-      ciLabel.appendChild(ciCheckbox);
-      ciLabel.appendChild(ciText);
-      ciSection.appendChild(ciLabel);
-
-      const ciDisclaimer = document.createElement('p');
-      ciDisclaimer.className = 'ci-disclaimer';
-      ciDisclaimer.id = 'ci-disclaimer';
-      ciDisclaimer.textContent = t('ci.disclaimer');
-      ciDisclaimer.style.display = get(CI_ENABLED_KEY) ? 'block' : 'none';
-      ciSection.appendChild(ciDisclaimer);
-
-      ciCheckbox.addEventListener('change', () => handleCIToggle(ciCheckbox.checked, ciDisclaimer));
-
-      section.appendChild(ciSection);
     }
   } else {
     const signIn = document.createElement('button');
@@ -553,9 +543,20 @@ async function handleConnect() {
       syncOnLogin(getToken(), user.login)
         .then(() => updateProgressDisplay())
         .catch(err => console.warn('Sync on login failed:', err.message));
-      if (get(CI_ENABLED_KEY)) {
+      if (get(CI_CONSENT_KEY)) {
         fetchCIResults(user.login)
-          .then(results => { if (results) set(CI_RESULTS_KEY, results); })
+          .then(results => {
+            if (!results) return;
+            set(CI_RESULTS_KEY, results);
+            const pending = get(CI_PENDING_KEY);
+            if (pending && results.exercises) {
+              for (const id of Object.keys(results.exercises)) {
+                delete pending[id];
+              }
+              set(CI_PENDING_KEY, pending);
+            }
+            loadExercise(currentExercise?.id ?? resolveStartExercise(), true);
+          })
           .catch(err => console.warn('CI results fetch failed:', err.message));
       }
     }
@@ -572,16 +573,72 @@ function handleSignOut() {
   renderAuthState();
 }
 
-function handleCIToggle(enabled, disclaimerEl) {
-  set(CI_ENABLED_KEY, enabled);
-  disclaimerEl.style.display = enabled ? 'block' : 'none';
-  if (!enabled) return;
-  const token = getToken();
-  const user = getSavedUser();
-  if (token && user) {
-    ensureFork(token, user.login)
-      .catch(err => console.warn('Fork creation failed:', err.message));
+function simpleHash(str) {
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    hash = ((hash << 5) - hash + str.charCodeAt(i)) | 0;
   }
+  return hash;
+}
+
+function pushToCI(token, owner, exerciseId, code) {
+  const pending = get(CI_PENDING_KEY) ?? {};
+  const codeHash = simpleHash(code);
+  if (pending[exerciseId] === codeHash) return;
+
+  pending[exerciseId] = codeHash;
+  set(CI_PENDING_KEY, pending);
+
+  ensureFork(token, owner)
+    .then(() => pushSolutionToFork(token, owner, exerciseId, code))
+    .catch(err => console.warn('CI sync failed:', err.message));
+}
+
+function showCIConsentPrompt(onAccept) {
+  const existing = document.getElementById('ci-consent-prompt');
+  if (existing) existing.remove();
+
+  const overlay = document.createElement('div');
+  overlay.className = 'ci-consent-backdrop';
+  overlay.id = 'ci-consent-prompt';
+
+  const card = document.createElement('div');
+  card.className = 'ci-consent-card';
+
+  const heading = document.createElement('h3');
+  heading.textContent = t('ci.consentHeading');
+
+  const text = document.createElement('p');
+  text.textContent = t('ci.consentText');
+
+  const actions = document.createElement('div');
+  actions.className = 'ci-consent-actions';
+
+  const acceptBtn = document.createElement('button');
+  acceptBtn.className = 'btn btn-primary';
+  acceptBtn.type = 'button';
+  acceptBtn.textContent = t('ci.consentAccept');
+  acceptBtn.addEventListener('click', () => {
+    set(CI_CONSENT_KEY, true);
+    overlay.remove();
+    onAccept();
+  });
+
+  const declineBtn = document.createElement('button');
+  declineBtn.className = 'btn btn-secondary';
+  declineBtn.type = 'button';
+  declineBtn.textContent = t('ci.consentDecline');
+  declineBtn.addEventListener('click', () => {
+    overlay.remove();
+  });
+
+  actions.appendChild(acceptBtn);
+  actions.appendChild(declineBtn);
+  card.appendChild(heading);
+  card.appendChild(text);
+  card.appendChild(actions);
+  overlay.appendChild(card);
+  document.body.appendChild(overlay);
 }
 
 function toggleSidebar() {
@@ -913,9 +970,20 @@ async function boot() {
           renderRibbon();
         })
         .catch(err => console.warn('Sync on boot failed:', err.message));
-      if (get(CI_ENABLED_KEY)) {
+      if (get(CI_CONSENT_KEY)) {
         fetchCIResults(user.login)
-          .then(results => { if (results) set(CI_RESULTS_KEY, results); })
+          .then(results => {
+            if (!results) return;
+            set(CI_RESULTS_KEY, results);
+            const pending = get(CI_PENDING_KEY);
+            if (pending && results.exercises) {
+              for (const id of Object.keys(results.exercises)) {
+                delete pending[id];
+              }
+              set(CI_PENDING_KEY, pending);
+            }
+            loadExercise(currentExercise?.id ?? resolveStartExercise(), true);
+          })
           .catch(err => console.warn('CI results fetch failed:', err.message));
       }
     }
