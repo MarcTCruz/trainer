@@ -103,3 +103,17 @@ export function getSavedCode(exerciseId) {
   const entry = state.completedExercises[exerciseId];
   return entry ? entry.code : null;
 }
+
+export function addBonusXp(exerciseId, newBonus) {
+  const state = loadState();
+  const entry = state.completedExercises[exerciseId];
+  const existingBonus = entry?.lintBonusAwarded ?? 0;
+
+  if (newBonus <= existingBonus) return 0;
+
+  const delta = newBonus - existingBonus;
+  state.xp += delta;
+  state.completedExercises[exerciseId] = { ...entry, lintBonusAwarded: newBonus };
+  save(state);
+  return delta;
+}

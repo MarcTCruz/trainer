@@ -1142,3 +1142,124 @@ body {
   margin-top: 12px;
   align-self: center;
 }
+
+/* Code Quality lint section */
+.lint-section {
+  margin-top: 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.lint-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  background: var(--bg-card);
+  cursor: pointer;
+  user-select: none;
+}
+
+.lint-header:hover {
+  background: var(--bg-hover);
+}
+
+.lint-header-icon {
+  font-size: 1rem;
+}
+
+.lint-header-title {
+  font-weight: 600;
+  color: var(--text-primary);
+  font-size: 0.85rem;
+}
+
+.lint-header-score {
+  color: var(--accent);
+  font-weight: 700;
+  font-size: 0.8rem;
+  font-family: var(--font-mono);
+}
+
+.lint-header-ratio {
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  margin-left: auto;
+}
+
+.lint-header-toggle {
+  color: var(--text-muted);
+  font-size: 0.7rem;
+  transition: transform 0.2s;
+}
+
+.lint-section.collapsed .lint-header-toggle {
+  transform: rotate(-90deg);
+}
+
+.lint-body {
+  padding: 4px 0;
+}
+
+.lint-section.collapsed .lint-body {
+  display: none;
+}
+
+.lint-rule {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 14px;
+  font-size: 0.82rem;
+  font-family: var(--font-mono);
+}
+
+.lint-rule-icon {
+  min-width: 16px;
+  font-weight: 800;
+}
+
+.lint-rule.pass .lint-rule-icon {
+  color: var(--success);
+}
+
+.lint-rule.fail .lint-rule-icon {
+  color: var(--warning);
+}
+
+.lint-rule-title {
+  color: var(--text-primary);
+}
+
+.lint-rule-xp {
+  color: var(--success);
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.lint-rule-violations {
+  color: var(--warning);
+  font-size: 0.75rem;
+  margin-left: auto;
+}
+
+.lint-rule.fail {
+  cursor: pointer;
+}
+
+.lint-rule.fail:hover {
+  background: var(--bg-hover);
+}
+
+.lint-hint {
+  display: none;
+  padding: 4px 14px 8px 38px;
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+  font-style: italic;
+}
+
+.lint-hint.visible {
+  display: block;
+}

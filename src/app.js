@@ -13,7 +13,9 @@ import { ensureRepo, pushSolution, pushProgress, syncOnLogin } from './github-sy
 import { ensureFork, pushSolutionToFork, fetchCIResults } from './ci-sync.js';
 import { initI18n, t, getLocale, setLocale, SUPPORTED_LOCALES } from './i18n.js';
 import { runExercise, ensureQuickJS } from './runner.js';
-import { markSolved, getProgress, getSavedCode, normalizeCode } from './progress.js';
+import { markSolved, getProgress, getSavedCode, normalizeCode, addBonusXp } from './progress.js';
+import { analyzeSolution } from './linter.js';
+import { LINT_RULES } from './lint-rules.js';
 import {
   getExercise,
   getNextVariant,
@@ -67,9 +69,12 @@ const elements = {
   leaderboardContent: document.getElementById('leaderboard-content'),
 };
 
+const LINT_RULE_META = Object.fromEntries(LINT_RULES.map(r => [r.id, { titleKey: r.titleKey, hintKey: r.hintKey, bonusXp: r.bonusXp }]));
+
 let editor;
 let currentHintIndex = 0;
 let currentExercise = null;
+let lastLintReport = null;
 
 function resolveStartExercise() {
   const progress = getProgress();
@@ -362,6 +367,9 @@ async function handleRun() {
 
     if (result.allPassed) {
       markSolved(currentExercise.id, userCode);
+      lastLintReport = analyzeSolution(userCode);
+      addBonusXp(currentExercise.id, lastLintReport.score);
+      renderLintResults(lastLintReport);
       if (isAuthenticated()) {
         const token = getToken();
         const user = getSavedUser();
@@ -463,6 +471,100 @@ function renderResults(result) {
     el.innerHTML = detail;
     container.appendChild(el);
   });
+}
+
+function createLintHeader(report) {
+  const header = document.createElement('div');
+  header.className = 'lint-header';
+  header.setAttribute('role', 'button');
+  header.setAttribute('tabindex', '0');
+
+  const icon = document.createElement('span');
+  icon.className = 'lint-header-icon';
+  icon.textContent = '✨';
+
+  const title = document.createElement('span');
+  title.className = 'lint-header-title';
+  title.textContent = t('lint.title');
+
+  const score = document.createElement('span');
+  score.className = 'lint-header-score';
+  score.textContent = `${report.score}/${report.maxScore} XP`;
+
+  const ratio = document.createElement('span');
+  ratio.className = 'lint-header-ratio';
+  ratio.textContent = `${report.passedCount}/${report.totalRules}`;
+
+  const toggle = document.createElement('span');
+  toggle.className = 'lint-header-toggle';
+  toggle.textContent = '▼';
+
+  header.appendChild(icon);
+  header.appendChild(title);
+  header.appendChild(score);
+  header.appendChild(ratio);
+  header.appendChild(toggle);
+  return header;
+}
+
+function createLintRuleElement(rule, meta) {
+  const row = document.createElement('div');
+  row.className = `lint-rule ${rule.passed ? 'pass' : 'fail'}`;
+
+  const icon = document.createElement('span');
+  icon.className = 'lint-rule-icon';
+  icon.textContent = rule.passed ? '✓' : '✗';
+
+  const ruleTitle = document.createElement('span');
+  ruleTitle.className = 'lint-rule-title';
+  ruleTitle.textContent = t(meta.titleKey);
+
+  row.appendChild(icon);
+  row.appendChild(ruleTitle);
+
+  if (rule.passed) {
+    const xp = document.createElement('span');
+    xp.className = 'lint-rule-xp';
+    xp.textContent = `+${rule.bonusXp} XP`;
+    row.appendChild(xp);
+    return { row, hint: null };
+  }
+
+  const violations = document.createElement('span');
+  violations.className = 'lint-rule-violations';
+  violations.textContent = `— ${rule.violations.map(v => escapeHtml(v)).join(', ')}`;
+  row.appendChild(violations);
+
+  const hint = document.createElement('div');
+  hint.className = 'lint-hint';
+  hint.textContent = t(meta.hintKey);
+
+  row.addEventListener('click', () => hint.classList.toggle('visible'));
+
+  return { row, hint };
+}
+
+function renderLintResults(report) {
+  const section = document.createElement('div');
+  section.className = 'lint-section';
+
+  const header = createLintHeader(report);
+  header.addEventListener('click', () => section.classList.toggle('collapsed'));
+
+  const body = document.createElement('div');
+  body.className = 'lint-body';
+
+  report.rules.forEach(rule => {
+    const meta = LINT_RULE_META[rule.id];
+    if (!meta) return;
+    const { row, hint } = createLintRuleElement(rule, meta);
+    body.appendChild(row);
+    if (hint) body.appendChild(hint);
+  });
+
+  section.appendChild(header);
+  section.appendChild(body);
+  elements.resultsContainer.appendChild(section);
 }
 
 function openAuthModal() {
