@@ -22,6 +22,7 @@ import {
   getAllClusters
 } from './exercise-loader.js';
 import { fetchAggregateResults, computeCalibration, CALIBRATION_KEY } from './difficulty-calibration.js';
+import { fetchLeaderboard, LEADERBOARD_KEY } from './leaderboard.js';
 
 const CI_ENABLED_KEY = 'trainer_ci_enabled';
 const CI_RESULTS_KEY = 'trainer_ci_results';
@@ -57,7 +58,12 @@ const elements = {
   authConnectButton: document.getElementById('auth-connect-button'),
   authCancelButton: document.getElementById('auth-cancel-button'),
   tokenInput: document.getElementById('token-input'),
-  authError: document.getElementById('auth-error')
+  authError: document.getElementById('auth-error'),
+  leaderboardButton: document.getElementById('leaderboard-button'),
+  leaderboardPanel: document.getElementById('leaderboard-panel'),
+  leaderboardBackdrop: document.getElementById('leaderboard-backdrop'),
+  leaderboardClose: document.getElementById('leaderboard-close'),
+  leaderboardContent: document.getElementById('leaderboard-content'),
 };
 
 let editor;
@@ -665,6 +671,72 @@ function renderSidebar() {
   });
 }
 
+function toggleLeaderboard() {
+  const isOpen = elements.leaderboardPanel.classList.toggle('open');
+  elements.leaderboardBackdrop.classList.toggle('open', isOpen);
+  if (isOpen) renderLeaderboard();
+}
+
+function closeLeaderboard() {
+  elements.leaderboardPanel.classList.remove('open');
+  elements.leaderboardBackdrop.classList.remove('open');
+}
+
+function renderLeaderboard() {
+  const container = elements.leaderboardContent;
+  container.innerHTML = '';
+
+  const cached = get(LEADERBOARD_KEY);
+  if (!cached || cached.length === 0) {
+    const empty = document.createElement('p');
+    empty.className = 'leaderboard-empty';
+    empty.textContent = t('leaderboard.empty');
+    container.appendChild(empty);
+    return;
+  }
+
+  cached.forEach((entry, idx) => {
+    const row = document.createElement('div');
+    row.className = 'leaderboard-row';
+
+    const rank = document.createElement('span');
+    rank.className = 'leaderboard-rank';
+    rank.textContent = `#${idx + 1}`;
+
+    const userLink = document.createElement('a');
+    userLink.className = 'leaderboard-user';
+    userLink.href = `https://github.com/${entry.user}`;
+    userLink.target = '_blank';
+    userLink.rel = 'noopener noreferrer';
+    userLink.textContent = entry.user;
+
+    const score = document.createElement('span');
+    score.className = 'leaderboard-score';
+    score.textContent = `${entry.passed}/${entry.total}`;
+
+    row.appendChild(rank);
+    row.appendChild(userLink);
+    row.appendChild(score);
+    container.appendChild(row);
+  });
+
+  const refreshBtn = document.createElement('button');
+  refreshBtn.className = 'btn btn-ghost leaderboard-refresh';
+  refreshBtn.type = 'button';
+  refreshBtn.textContent = t('leaderboard.refresh');
+  refreshBtn.addEventListener('click', () => {
+    refreshBtn.disabled = true;
+    refreshBtn.textContent = t('leaderboard.refreshing');
+    fetchLeaderboard()
+      .then(entries => {
+        if (entries) set(LEADERBOARD_KEY, entries);
+        renderLeaderboard();
+      })
+      .catch(() => renderLeaderboard());
+  });
+  container.appendChild(refreshBtn);
+}
+
 function handleReset() {
   if (!currentExercise) return;
   setCode(editor, currentExercise.starterCode);
@@ -731,6 +803,9 @@ elements.hintButton.addEventListener('click', handleHint);
 elements.browseButton.addEventListener('click', toggleSidebar);
 elements.sidebarClose.addEventListener('click', closeSidebar);
 elements.sidebarBackdrop.addEventListener('click', closeSidebar);
+elements.leaderboardButton.addEventListener('click', toggleLeaderboard);
+elements.leaderboardClose.addEventListener('click', closeLeaderboard);
+elements.leaderboardBackdrop.addEventListener('click', closeLeaderboard);
 elements.authModalClose.addEventListener('click', closeAuthModal);
 elements.authModalBackdrop.addEventListener('click', closeAuthModal);
 elements.authConnectButton.addEventListener('click', handleConnect);
@@ -745,6 +820,7 @@ document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape') {
     closeSidebar();
     closeAuthModal();
+    closeLeaderboard();
   }
 });
 
@@ -787,6 +863,8 @@ function applyI18nToDOM() {
 
   elements.stepper.setAttribute('aria-label', t('nav.exerciseProgression'));
   elements.ribbon.setAttribute('aria-label', t('nav.conceptClusters'));
+  document.querySelector('.leaderboard-header h2').textContent = t('leaderboard.title');
+  elements.leaderboardClose.setAttribute('aria-label', t('leaderboard.close'));
 
   renderLocaleSelector();
 }
@@ -849,6 +927,9 @@ async function boot() {
       set(CALIBRATION_KEY, calibrated);
     })
     .catch(err => console.warn('Calibration fetch failed:', err.message));
+  fetchLeaderboard()
+    .then(entries => { if (entries) set(LEADERBOARD_KEY, entries); })
+    .catch(err => console.warn('Leaderboard fetch failed:', err.message));
 }
 
 boot();

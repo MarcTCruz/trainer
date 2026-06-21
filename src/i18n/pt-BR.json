@@ -57,5 +57,10 @@
   "evolution.stay": "Ficar e Refatorar",
   "runner.fnNotDefined": "A função \"{functionName}\" não está definida.",
   "runner.notAFunction": "\"{name}\" não é uma função (tipo: {type}).",
-  "app.offline": "Você está offline. As alterações serão sincronizadas ao reconectar."
+  "app.offline": "Você está offline. As alterações serão sincronizadas ao reconectar.",
+  "leaderboard.title": "Classificação",
+  "leaderboard.close": "Fechar",
+  "leaderboard.empty": "Nenhum usuário verificado ainda.",
+  "leaderboard.refresh": "Atualizar",
+  "leaderboard.refreshing": "Atualizando..."
 }

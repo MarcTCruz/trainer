@@ -57,5 +57,10 @@
   "evolution.stay": "Stay & Refactor",
   "runner.fnNotDefined": "Function \"{functionName}\" is not defined.",
   "runner.notAFunction": "\"{name}\" is not a function (got {type}).",
-  "app.offline": "You are offline. Changes will sync when reconnected."
+  "app.offline": "You are offline. Changes will sync when reconnected.",
+  "leaderboard.title": "Leaderboard",
+  "leaderboard.close": "Close",
+  "leaderboard.empty": "No verified users yet.",
+  "leaderboard.refresh": "Refresh",
+  "leaderboard.refreshing": "Refreshing..."
 }
