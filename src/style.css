@@ -1437,6 +1437,23 @@ body {
   display: block;
 }
 
+/* Auto-format toggle */
+.auto-format-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+  cursor: pointer;
+  user-select: none;
+}
+.auto-format-toggle input[type="checkbox"] {
+  accent-color: var(--accent);
+  width: 14px;
+  height: 14px;
+  cursor: pointer;
+}
+
 /* Debug button */
 .btn-debug {
   background: var(--warning);

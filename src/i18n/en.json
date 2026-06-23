@@ -58,6 +58,7 @@
   "run.formatError": "✘ Format error: {message}",
   "run.shortcutRun": "run",
   "run.shortcutFormat": "format",
+  "run.autoFormat": "Auto-format",
   "test.pass": "PASS",
   "test.fail": "FAIL",
   "test.label": "Test {index}:",

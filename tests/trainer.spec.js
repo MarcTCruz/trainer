@@ -1758,6 +1758,7 @@ test('i18n: locale switch translates all UI chrome including debug and custom te
     { sel: '.sidebar-header h2', key: 'nav.exercises' },
     { sel: '.leaderboard-header h2', key: 'leaderboard.title' },
     { sel: '#dbg-picker-label', key: 'debug.testPickerLabel' },
+    { sel: '#auto-format-label', key: 'run.autoFormat' },
   ];
 
   const ARIA_LABELS = [

@@ -96,6 +96,7 @@ const elements = {
   customTestExpected: document.getElementById('custom-test-expected'),
   customTestAdd: document.getElementById('custom-test-add'),
   customTestsList: document.getElementById('custom-tests-list'),
+  autoFormatCheckbox: document.getElementById('auto-format-checkbox'),
   viewClusters: document.getElementById('view-clusters'),
   viewTrack: document.getElementById('view-track'),
 };
@@ -1542,8 +1543,67 @@ if (elements.viewTrack) {
 }
 
 onFormat(handleFormat);
+
+const AUTO_FORMAT_KEY = 'trainer_auto_format';
+const AUTO_FORMAT_DELAY = 1500;
+let autoFormatTimer = null;
+let autoFormatAborted = false;
+
+function isAutoFormatEnabled() {
+  return elements.autoFormatCheckbox.checked;
+}
+
+elements.autoFormatCheckbox.checked = get(AUTO_FORMAT_KEY) !== false;
+elements.autoFormatCheckbox.addEventListener('change', () => {
+  set(AUTO_FORMAT_KEY, elements.autoFormatCheckbox.checked);
+});
+
+function abortAutoFormat() {
+  autoFormatAborted = true;
+  if (autoFormatTimer) {
+    clearTimeout(autoFormatTimer);
+    autoFormatTimer = null;
+  }
+}
+
+elements.editorContainer.addEventListener('keydown', abortAutoFormat, true);
+
+async function tryAutoFormat() {
+  if (!isAutoFormatEnabled()) return;
+  const snapshot = getCode(editor);
+  autoFormatAborted = false;
+  try {
+    const prettier = await import('prettier/standalone');
+    const parserBabel = await import('prettier/plugins/babel');
+    const parserEstree = await import('prettier/plugins/estree');
+    if (autoFormatAborted) return;
+    if (getCode(editor) !== snapshot) return;
+    const formatted = await prettier.format(snapshot, {
+      parser: 'babel',
+      plugins: [parserBabel.default, parserEstree.default],
+      semi: true,
+      singleQuote: true,
+      tabWidth: 2,
+      printWidth: 60,
+    });
+    if (autoFormatAborted) return;
+    if (getCode(editor) !== snapshot) return;
+    const trimmed = formatted.trimEnd();
+    if (trimmed !== snapshot) setCode(editor, trimmed);
+  } catch {
+    // Syntax error — skip silently
+  }
+}
+
+function scheduleAutoFormat() {
+  abortAutoFormat();
+  if (!isAutoFormatEnabled()) return;
+  autoFormatTimer = setTimeout(tryAutoFormat, AUTO_FORMAT_DELAY);
+}
+
 onChange((code) => {
   if (currentExercise) saveDraft(currentExercise.id, code);
+  scheduleAutoFormat();
 });
 
 document.addEventListener('keydown', (e) => {
@@ -1592,6 +1652,7 @@ function applyI18nToDOM() {
   elements.runButton.textContent = t('run.runCode');
   elements.resetButton.textContent = t('run.reset');
   elements.formatButton.textContent = t('run.format');
+  document.getElementById('auto-format-label').textContent = t('run.autoFormat');
 
   const statLabels = document.querySelectorAll('.stat-label');
   const labelKeys = ['stats.xp', 'stats.streak', 'stats.solved'];
