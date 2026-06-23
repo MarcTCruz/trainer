@@ -139,5 +139,7 @@
   "ribbon.thirtyDays": "30 Days",
   "ribbon.trackDay": "Day {day}",
   "ribbon.trackDayStructure": "{structure}",
-  "ribbon.revisit": "↻"
+  "ribbon.revisit": "↻",
+  "pwa.updateAvailable": "Update available — click to refresh",
+  "pwa.offlineReady": "Ready for offline use"
 }

@@ -1728,6 +1728,29 @@ body {
   outline-offset: 1px;
 }
 
+/* PWA toast */
+.pwa-toast {
+  position: fixed;
+  bottom: 1.25rem;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--bg-card);
+  color: var(--text-primary);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.75rem 1.25rem;
+  font-size: 0.875rem;
+  box-shadow: 0 4px 16px oklch(0 0 0 / 0.4);
+  z-index: 9999;
+  white-space: nowrap;
+  animation: pwa-toast-in 0.2s ease-out;
+}
+
+@keyframes pwa-toast-in {
+  from { opacity: 0; transform: translateX(-50%) translateY(0.5rem); }
+  to   { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+
 /* Reduced motion — blanket override */
 @media (prefers-reduced-motion: reduce) {
   *,

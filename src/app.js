@@ -11,6 +11,7 @@ import {
 } from './github-auth.js';
 import { ensureRepo, pushSolution, pushProgress, syncOnLogin, setRepoVisibility, pushReadme } from './github-sync.js';
 import { ensureFork, pushSolutionToFork, fetchCIResults, deleteFork } from './ci-sync.js';
+import { registerSW } from 'virtual:pwa-register';
 import { initI18n, t, getLocale, setLocale, SUPPORTED_LOCALES } from './i18n.js';
 import { runExercise, ensureQuickJS } from './runner.js';
 import { markSolved, getProgress, getSavedCode, saveDraft, normalizeCode, addBonusXp } from './progress.js';
@@ -1510,10 +1511,40 @@ function renderLocaleSelector() {
   document.querySelector('.header').appendChild(container);
 }
 
+function showPwaToast(i18nKey, onClick) {
+  const toast = document.createElement('div');
+  toast.className = 'pwa-toast';
+  toast.setAttribute('role', 'status');
+  toast.setAttribute('aria-live', 'polite');
+  toast.textContent = t(i18nKey);
+
+  if (onClick) {
+    toast.style.cursor = 'pointer';
+    toast.addEventListener('click', onClick);
+  }
+
+  document.body.appendChild(toast);
+
+  const DISMISS_DELAY_MS = 5000;
+  setTimeout(() => toast.remove(), DISMISS_DELAY_MS);
+}
+
+function initServiceWorker() {
+  const updateSW = registerSW({
+    onNeedRefresh() {
+      showPwaToast('pwa.updateAvailable', () => updateSW(true));
+    },
+    onOfflineReady() {
+      showPwaToast('pwa.offlineReady');
+    },
+  });
+}
+
 async function boot() {
   await initStorage();
   await initI18n();
   applyI18nToDOM();
+  initServiceWorker();
   setupOfflineIndicator();
   loadExercise(resolveStartExercise());
   syncViewToggle();
