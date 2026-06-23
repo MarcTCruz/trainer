@@ -1,0 +1,25 @@
+{
+  "id": "linked-list-cycle",
+  "variantOf": null,
+  "variantOrder": 1,
+  "variantPrompt": null,
+  "title": "Linked List Cycle",
+  "difficulty": "Easy",
+  "description": "Given an array of node values and a `pos` index indicating where the tail connects back to (-1 means no cycle), determine if the linked list has a cycle.\n\nUse Floyd's tortoise and hare algorithm: two pointers moving at different speeds.",
+  "functionName": "hasCycle",
+  "params": ["values", "pos"],
+  "starterCode": "function hasCycle(values, pos) {\n  // Your solution here\n  \n}",
+  "testCases": [
+    { "input": [[3, 2, 0, -4], 1], "expected": true },
+    { "input": [[1, 2], 0], "expected": true },
+    { "input": [[1], -1], "expected": false },
+    { "input": [[], -1], "expected": false }
+  ],
+  "hints": [
+    "Floyd's cycle detection: use a slow pointer (1 step) and fast pointer (2 steps).",
+    "If there's a cycle, the fast pointer will eventually meet the slow pointer.",
+    "If the fast pointer reaches null, there's no cycle."
+  ],
+  "track": "30-days",
+  "day": 10
+}

@@ -1,0 +1,26 @@
+{
+  "id": "binary-search",
+  "variantOf": null,
+  "variantOrder": 1,
+  "variantPrompt": null,
+  "title": "Binary Search",
+  "difficulty": "Easy",
+  "description": "Given a **sorted** array of integers `nums` and a `target` integer, return the **index** of `target` in the array. If `target` is not found, return `-1`.\n\nYou must implement an algorithm with **O(log n)** runtime complexity.\n\n**Example:**\n```\nnums = [-1, 0, 3, 5, 9, 12], target = 9\nResult = 4\n```",
+  "functionName": "search",
+  "params": ["nums", "target"],
+  "starterCode": "function search(nums, target) {\n  // Your solution here\n  \n}",
+  "testCases": [
+    { "input": [[-1, 0, 3, 5, 9, 12], 9], "expected": 4 },
+    { "input": [[-1, 0, 3, 5, 9, 12], 2], "expected": -1 },
+    { "input": [[5], 5], "expected": 0 },
+    { "input": [[], 5], "expected": -1 },
+    { "input": [[2, 5], 5], "expected": 1 }
+  ],
+  "hints": [
+    "Compare the target with the middle element.",
+    "If target is smaller, search the left half. If larger, search the right half.",
+    "Use two pointers (left, right) and narrow the range each step."
+  ],
+  "track": "30-days",
+  "day": 18
+}

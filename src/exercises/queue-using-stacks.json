@@ -1,0 +1,29 @@
+{
+  "id": "queue-using-stacks",
+  "variantOf": null,
+  "variantOrder": 1,
+  "variantPrompt": null,
+  "title": "Implement Queue using Stacks",
+  "difficulty": "Medium",
+  "description": "Implement a first-in-first-out (FIFO) queue using only two stacks.\n\nGiven arrays `operations` (strings: `\"push\"`, `\"pop\"`, `\"peek\"`, `\"empty\"`) and `values` (corresponding values — `null` for non-push ops), execute them on a queue implemented with two stacks and return an array of results:\n- `push(x)` → `null`\n- `pop()` → the removed front value\n- `peek()` → the front value without removing it\n- `empty()` → `true` or `false`",
+  "functionName": "queueOperations",
+  "params": ["operations", "values"],
+  "starterCode": "function queueOperations(operations, values) {\n  // Your solution here\n  \n}",
+  "testCases": [
+    {
+      "input": [["push", "push", "peek", "pop", "empty"], [[1], [2], null, null, null]],
+      "expected": [null, null, 1, 1, false]
+    },
+    {
+      "input": [["push", "pop", "empty"], [[1], null, null]],
+      "expected": [null, 1, true]
+    }
+  ],
+  "hints": [
+    "Use two stacks: one for input, one for output.",
+    "Transfer elements from input to output only when output is empty.",
+    "This lazy transfer gives amortized O(1) per operation."
+  ],
+  "track": "30-days",
+  "day": 8
+}

@@ -1,0 +1,26 @@
+{
+  "id": "quick-sort",
+  "variantOf": null,
+  "variantOrder": 1,
+  "variantPrompt": null,
+  "title": "Quick Sort",
+  "difficulty": "Medium",
+  "description": "Implement **quick sort**. Given an array of numbers, return a new sorted array in ascending order.\n\nQuick sort selects a pivot element, partitions the array into elements less than and greater than the pivot, then recursively sorts each partition.\n\n**Example:**\n```\nnums = [3, 6, 8, 10, 1, 2, 1]\nResult = [1, 1, 2, 3, 6, 8, 10]\n```",
+  "functionName": "quickSort",
+  "params": ["nums"],
+  "starterCode": "function quickSort(nums) {\n  // Your solution here\n  \n}",
+  "testCases": [
+    { "input": [[3, 6, 8, 10, 1, 2, 1]], "expected": [1, 1, 2, 3, 6, 8, 10] },
+    { "input": [[1]], "expected": [1] },
+    { "input": [[]], "expected": [] },
+    { "input": [[5, 5, 5]], "expected": [5, 5, 5] },
+    { "input": [[9, 1]], "expected": [1, 9] }
+  ],
+  "hints": [
+    "Pick a pivot element, then partition: smaller elements left, larger right.",
+    "Recursively sort the left and right partitions.",
+    "Concatenation approach: filter into less/equal/greater, recurse on less and greater."
+  ],
+  "track": "30-days",
+  "day": 17
+}

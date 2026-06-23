@@ -1,0 +1,24 @@
+{
+  "id": "add-two-numbers",
+  "variantOf": null,
+  "variantOrder": 1,
+  "variantPrompt": null,
+  "title": "Add Two Numbers",
+  "difficulty": "Medium",
+  "description": "You are given two non-empty arrays representing two non-negative integers. The digits are stored in **reverse order** (least significant digit first), and each element contains a single digit.\n\nAdd the two numbers and return the sum as an array in the same format.\n\nExample: `[2,4,3]` + `[5,6,4]` = 342 + 465 = 807 → `[7,0,8]`",
+  "functionName": "addTwoNumbers",
+  "params": ["l1", "l2"],
+  "starterCode": "function addTwoNumbers(l1, l2) {\n  // Your solution here\n  \n}",
+  "testCases": [
+    { "input": [[2,4,3],[5,6,4]], "expected": [7,0,8] },
+    { "input": [[0],[0]], "expected": [0] },
+    { "input": [[9,9,9,9,9,9,9],[9,9,9,9]], "expected": [8,9,9,9,0,0,0,1] }
+  ],
+  "hints": [
+    "Process both arrays simultaneously, digit by digit, tracking the carry.",
+    "When one array is shorter, treat missing digits as 0.",
+    "Don't forget the final carry — if it's 1, append it."
+  ],
+  "track": "30-days",
+  "day": 24
+}

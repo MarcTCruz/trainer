@@ -1,0 +1,26 @@
+{
+  "id": "valid-anagram",
+  "variantOf": null,
+  "variantOrder": 1,
+  "variantPrompt": null,
+  "title": "Valid Anagram",
+  "difficulty": "Easy",
+  "description": "Given two strings `s` and `t`, return `true` if `t` is an anagram of `s`, and `false` otherwise.\n\nAn anagram is a word formed by rearranging the letters of another, using all original letters exactly once.",
+  "functionName": "isAnagram",
+  "params": ["s", "t"],
+  "starterCode": "function isAnagram(s, t) {\n  // Your solution here\n  \n}",
+  "testCases": [
+    { "input": ["anagram", "nagaram"], "expected": true },
+    { "input": ["rat", "car"], "expected": false },
+    { "input": ["", ""], "expected": true },
+    { "input": ["a", "ab"], "expected": false },
+    { "input": ["listen", "silent"], "expected": true }
+  ],
+  "hints": [
+    "An anagram uses the same characters the same number of times.",
+    "Count character frequencies in both strings.",
+    "Compare the frequency counts — they must be identical."
+  ],
+  "track": "30-days",
+  "day": 4
+}

@@ -1,0 +1,24 @@
+{
+  "id": "top-k-frequent",
+  "variantOf": null,
+  "variantOrder": 1,
+  "variantPrompt": null,
+  "title": "Top K Frequent Elements",
+  "difficulty": "Medium",
+  "description": "Given an integer array `nums` and an integer `k`, return the `k` most frequent elements.\n\nYou may return the answer in **any order**. The test cases sort the output for determinism, so your function should also return the result **sorted in ascending order**.\n\nExample: `nums = [1,1,1,2,2,3]`, `k = 2` → `[1,2]`",
+  "functionName": "topKFrequent",
+  "params": ["nums", "k"],
+  "starterCode": "function topKFrequent(nums, k) {\n  // Your solution here\n  \n}",
+  "testCases": [
+    { "input": [[1, 1, 1, 2, 2, 3], 2], "expected": [1, 2] },
+    { "input": [[1], 1], "expected": [1] },
+    { "input": [[4, 4, 4, 1, 1, 2, 2, 2], 2], "expected": [2, 4] }
+  ],
+  "hints": [
+    "Count frequencies first using an object as a hash map.",
+    "Then select the top k — sorting by frequency works.",
+    "Bucket sort optimization: index = frequency, value = elements with that frequency."
+  ],
+  "track": "30-days",
+  "day": 23
+}

@@ -1,5 +1,5 @@
 import { init as initStorage, get, set, clearAll } from './storage.js';
-import { createEditor, getCode, setCode, onFormat } from './editor.js';
+import { createEditor, getCode, setCode, onFormat, onChange } from './editor.js';
 import {
   saveToken,
   getToken,
@@ -13,15 +13,19 @@ import { ensureRepo, pushSolution, pushProgress, syncOnLogin, setRepoVisibility,
 import { ensureFork, pushSolutionToFork, fetchCIResults, deleteFork } from './ci-sync.js';
 import { initI18n, t, getLocale, setLocale, SUPPORTED_LOCALES } from './i18n.js';
 import { runExercise, ensureQuickJS } from './runner.js';
-import { markSolved, getProgress, getSavedCode, normalizeCode, addBonusXp } from './progress.js';
-import { analyzeSolution } from './linter.js';
+import { markSolved, getProgress, getSavedCode, saveDraft, normalizeCode, addBonusXp } from './progress.js';
+import { analyzeSolution } from './linter.js'
+import { initDebugUI, startDebugSession } from './debugger/debugUI.js';
+import { getCustomTests, addCustomTest, removeCustomTest } from './custom-tests.js';
 import { LINT_RULES } from './lint-rules.js';
 import {
   getExercise,
   getNextVariant,
   getVariantsOf,
   getCluster,
-  getAllClusters
+  getAllClusters,
+  getTrack,
+  getTrackExercises
 } from './exercise-loader.js';
 import { fetchAggregateResults, computeCalibration, CALIBRATION_KEY } from './difficulty-calibration.js';
 import { fetchLeaderboard, LEADERBOARD_KEY } from './leaderboard.js';
@@ -30,6 +34,7 @@ const CI_CONSENT_KEY = 'trainer_ci_consent';
 const CI_PENDING_KEY = 'trainer_ci_pending';
 const CI_RESULTS_KEY = 'trainer_ci_results';
 const REPO_PUBLIC_KEY = 'trainer_repo_public';
+const RIBBON_VIEW_KEY = 'trainer_ribbon_view';
 
 const elements = {
   title: document.getElementById('exercise-title'),
@@ -68,6 +73,29 @@ const elements = {
   leaderboardBackdrop: document.getElementById('leaderboard-backdrop'),
   leaderboardClose: document.getElementById('leaderboard-close'),
   leaderboardContent: document.getElementById('leaderboard-content'),
+  debugButton: document.getElementById('debug-button'),
+  debugToolbar: document.getElementById('debug-toolbar'),
+  debugPanel: document.getElementById('debug-panel'),
+  dbgStepBack: document.getElementById('dbg-step-back'),
+  dbgStepInto: document.getElementById('dbg-step-into'),
+  dbgStepOver: document.getElementById('dbg-step-over'),
+  dbgStepOut: document.getElementById('dbg-step-out'),
+  dbgContinue: document.getElementById('dbg-continue'),
+  dbgContinueBack: document.getElementById('dbg-continue-back'),
+  dbgReset: document.getElementById('dbg-reset'),
+  dbgPosition: document.getElementById('dbg-position'),
+  dbgStop: document.getElementById('dbg-stop'),
+  debugVarsContent: document.getElementById('debug-vars-content'),
+  debugCallstackContent: document.getElementById('debug-callstack-content'),
+  dbgTestPicker: document.getElementById('dbg-test-picker'),
+  customTestsToggle: document.getElementById('custom-tests-toggle'),
+  customTestsForm: document.getElementById('custom-tests-form'),
+  customTestInput: document.getElementById('custom-test-input'),
+  customTestExpected: document.getElementById('custom-test-expected'),
+  customTestAdd: document.getElementById('custom-test-add'),
+  customTestsList: document.getElementById('custom-tests-list'),
+  viewClusters: document.getElementById('view-clusters'),
+  viewTrack: document.getElementById('view-track'),
 };
 
 const LINT_RULE_META = Object.fromEntries(LINT_RULES.map(r => [r.id, { titleKey: r.titleKey, hintKey: r.hintKey, bonusXp: r.bonusXp }]));
@@ -76,6 +104,7 @@ let editor;
 let currentHintIndex = 0;
 let currentExercise = null;
 let lastLintReport = null;
+let ribbonView = get(RIBBON_VIEW_KEY) || 'clusters';
 
 function resolveStartExercise() {
   const progress = getProgress();
@@ -143,6 +172,7 @@ function loadExercise(id, keepCode = false) {
     } else {
       editor = createEditor(elements.editorContainer, savedCode || exercise.starterCode);
     }
+    window.__testEditor = { setCode: (code) => setCode(editor, code), getCode: () => getCode(editor) };
   }
 
   elements.resultsContainer.innerHTML = '';
@@ -153,8 +183,10 @@ function loadExercise(id, keepCode = false) {
   elements.hintButton.textContent = t('hint.button', { current: 1, total: exercise.hints?.length ?? 0 });
 
   renderStepper();
-  renderRibbon();
+  updateRibbon();
   updateProgressDisplay();
+  renderCustomTestsList();
+  populateTestPicker();
 }
 
 function formatDescription(desc) {
@@ -267,7 +299,7 @@ function renderRibbon() {
 
     const bar = document.createElement('span');
     bar.className = 'ribbon-progress';
-    bar.style.width = `${progressPct}%`;
+    bar.style.setProperty('--progress', progressPct / 100);
     bar.setAttribute('aria-hidden', 'true');
 
     pill.appendChild(bar);
@@ -281,6 +313,77 @@ function renderRibbon() {
 
     container.appendChild(pill);
   });
+}
+
+function renderTrackRibbon() {
+  const container = elements.ribbon;
+  if (!container) return;
+
+  const trackDays = getTrackExercises('thirty-days');
+  if (!trackDays.length) return;
+
+  const progress = getProgress();
+  const solved = progress.completedExercises;
+
+  container.innerHTML = '';
+
+  trackDays.forEach((dayEntry, idx) => {
+    const isSolved = Boolean(solved[dayEntry.exerciseId]);
+    const prevSolved = idx === 0 || Boolean(solved[trackDays[idx - 1].exerciseId]);
+    const isLocked = idx > 0 && !prevSolved;
+    const isActive = currentExercise?.id === dayEntry.exerciseId;
+
+    const pill = document.createElement('button');
+    pill.className = `ribbon-pill track-day${isActive ? ' active' : ''}${isSolved ? ' solved' : ''}${isLocked ? ' locked' : ''}`;
+    pill.type = 'button';
+    pill.disabled = isLocked;
+    pill.setAttribute('aria-pressed', String(isActive));
+    if (isLocked) pill.setAttribute('aria-disabled', 'true');
+
+    const dayLabel = document.createElement('span');
+    dayLabel.className = 'track-day-num';
+    dayLabel.textContent = t('ribbon.trackDay', { day: dayEntry.day });
+
+    const structLabel = document.createElement('span');
+    structLabel.className = 'track-day-label';
+    structLabel.textContent = t('ribbon.trackDayStructure', { structure: dayEntry.structure });
+
+    pill.appendChild(dayLabel);
+    pill.appendChild(structLabel);
+
+    if (dayEntry.revisits?.length) {
+      const revisitLabel = document.createElement('span');
+      revisitLabel.className = 'track-day-revisit';
+      revisitLabel.textContent = t('ribbon.revisit');
+      revisitLabel.title = dayEntry.revisits.map(r => r.replace('day-', 'Day ')).join(', ');
+      pill.appendChild(revisitLabel);
+    }
+
+    if (!isLocked) {
+      pill.addEventListener('click', () => {
+        loadExercise(dayEntry.exerciseId, false);
+      });
+    }
+
+    container.appendChild(pill);
+  });
+}
+
+function updateRibbon() {
+  if (ribbonView === 'track') {
+    renderTrackRibbon();
+  } else {
+    renderRibbon();
+  }
+}
+
+function syncViewToggle() {
+  if (!elements.viewClusters || !elements.viewTrack) return;
+  const isClusters = ribbonView === 'clusters';
+  elements.viewClusters.classList.toggle('active', isClusters);
+  elements.viewTrack.classList.toggle('active', !isClusters);
+  elements.viewClusters.setAttribute('aria-pressed', String(isClusters));
+  elements.viewTrack.setAttribute('aria-pressed', String(!isClusters));
 }
 
 function showEvolutionPrompt(nextVariant, forwardResult) {
@@ -346,6 +449,104 @@ function dismissEvolutionPrompt() {
   if (existing) existing.remove();
 }
 
+async function handleDebug() {
+  const userCode = getCode(editor)
+  const customTests = getCustomTests(currentExercise.id)
+  const mergedExercise = customTests.length > 0
+    ? { ...currentExercise, testCases: [...currentExercise.testCases, ...customTests] }
+    : currentExercise
+  const pickerIdx = parseInt(elements.dbgTestPicker.value, 10)
+  const testIndex = Number.isFinite(pickerIdx) ? pickerIdx : 0
+  await startDebugSession(userCode, mergedExercise, editor, testIndex)
+}
+
+function populateTestPicker() {
+  const picker = elements.dbgTestPicker
+  picker.innerHTML = ''
+  const defaults = currentExercise.testCases
+  const custom = getCustomTests(currentExercise.id)
+  const fnName = currentExercise.functionName
+
+  defaults.forEach((tc, i) => {
+    const opt = document.createElement('option')
+    opt.value = String(i)
+    opt.textContent = `${fnName}(${tc.input.map(v => JSON.stringify(v)).join(', ')})`
+    picker.appendChild(opt)
+  })
+
+  custom.forEach((tc, i) => {
+    const opt = document.createElement('option')
+    opt.value = String(defaults.length + i)
+    opt.textContent = `${t('customTest.prefix')} ${fnName}(${tc.input.map(v => JSON.stringify(v)).join(', ')})`
+    picker.appendChild(opt)
+  })
+}
+
+function renderCustomTestsList() {
+  const container = elements.customTestsList
+  container.innerHTML = ''
+  const tests = getCustomTests(currentExercise.id)
+  const fnName = currentExercise.functionName
+
+  for (let i = 0; i < tests.length; i++) {
+    const tc = tests[i]
+    const item = document.createElement('div')
+    item.className = 'custom-test-item'
+
+    const badge = document.createElement('span')
+    badge.className = 'custom-test-badge'
+    badge.textContent = t('customTest.badge')
+
+    const body = document.createElement('span')
+    body.className = 'custom-test-body'
+    const args = tc.input.map(v => JSON.stringify(v)).join(', ')
+    body.textContent = `${fnName}(${args}) → ${JSON.stringify(tc.expected)}`
+
+    const del = document.createElement('button')
+    del.className = 'custom-test-delete'
+    del.type = 'button'
+    del.textContent = '✕'
+    del.addEventListener('click', () => {
+      removeCustomTest(currentExercise.id, i)
+      renderCustomTestsList()
+      populateTestPicker()
+    })
+
+    item.appendChild(badge)
+    item.appendChild(body)
+    item.appendChild(del)
+    container.appendChild(item)
+  }
+}
+
+function handleAddCustomTest() {
+  const rawInput = elements.customTestInput.value.trim()
+  const rawExpected = elements.customTestExpected.value.trim()
+  if (!rawInput && !rawExpected) return
+
+  let input, expected
+  try {
+    input = [JSON.parse(rawInput)]
+  } catch {
+    try {
+      input = JSON.parse(`[${rawInput}]`)
+    } catch {
+      input = [rawInput]
+    }
+  }
+  try {
+    expected = JSON.parse(rawExpected)
+  } catch {
+    expected = rawExpected
+  }
+
+  addCustomTest(currentExercise.id, input, expected)
+  elements.customTestInput.value = ''
+  elements.customTestExpected.value = ''
+  renderCustomTestsList()
+  populateTestPicker()
+}
+
 async function handleRun() {
   elements.runButton.disabled = true;
   elements.runButton.textContent = t('run.running');
@@ -361,12 +562,23 @@ async function handleRun() {
     elements.wasmStatus.textContent = t('run.executing');
 
     const userCode = getCode(editor);
-    const result = await runExercise(userCode, currentExercise);
+    const customTests = getCustomTests(currentExercise.id);
+    const mergedExercise = customTests.length > 0
+      ? { ...currentExercise, testCases: [...currentExercise.testCases, ...customTests] }
+      : currentExercise;
+    const defaultCount = currentExercise.testCases.length;
+    const result = await runExercise(userCode, mergedExercise);
+
+    result.results.forEach((r, i) => { r.isCustom = i >= defaultCount; });
 
     elements.wasmStatus.classList.remove('visible');
     renderResults(result);
 
-    if (result.allPassed) {
+    const defaultResults = result.results.filter(r => !r.isCustom);
+    if (result.error) {
+      elements.statusBar.textContent = t('run.error', { error: result.error });
+      elements.statusBar.className = 'status-message error';
+    } else if (defaultResults.every(r => r.passed)) {
       markSolved(currentExercise.id, userCode);
       lastLintReport = analyzeSolution(userCode);
       addBonusXp(currentExercise.id, lastLintReport.score);
@@ -395,7 +607,7 @@ async function handleRun() {
       }
       updateProgressDisplay();
       renderStepper();
-      renderRibbon();
+      updateRibbon();
       elements.statusBar.textContent = t('run.allPassed');
       elements.statusBar.className = 'status-message success';
 
@@ -414,9 +626,6 @@ async function handleRun() {
         }
         showEvolutionPrompt(nextVariant, forwardResult);
       }
-    } else if (result.error) {
-      elements.statusBar.textContent = t('run.error', { error: result.error });
-      elements.statusBar.className = 'status-message error';
     } else {
       const passCount = result.results.filter((r) => r.passed).length;
       elements.statusBar.textContent = t('run.partial', { passCount, totalCount: result.results.length });
@@ -449,7 +658,7 @@ function renderResults(result) {
 
   result.results.forEach((r, i) => {
     const el = document.createElement('div');
-    el.className = `test-result ${r.passed ? 'pass' : 'fail'}`;
+    el.className = `test-result ${r.passed ? 'pass' : 'fail'}${r.isCustom ? ' custom' : ''}`;
 
     const icon = r.passed ? '✓' : '✗';
     const verdict = r.passed ? t('test.pass') : t('test.fail');
@@ -457,6 +666,7 @@ function renderResults(result) {
 
     let detail = `<span class="result-icon">${icon}</span>`;
     detail += `<span class="result-verdict">${verdict}</span>`;
+    if (r.isCustom) detail += `<span class="custom-test-badge">custom</span>`;
     detail += `<span class="result-label">${t('test.label', { index: i + 1 })}</span>`;
     detail += `<span class="result-input">${escapeHtml(fnName)}(${escapeHtml(args)})</span>`;
 
@@ -526,7 +736,7 @@ function createLintRuleElement(rule, meta) {
   if (rule.passed) {
     const xp = document.createElement('span');
     xp.className = 'lint-rule-xp';
-    xp.textContent = `+${rule.bonusXp} XP`;
+    xp.textContent = t('lint.bonusXp', { xp: rule.bonusXp });
     row.appendChild(xp);
     return { row, hint: null };
   }
@@ -1125,6 +1335,17 @@ async function handleFormat() {
   }
 }
 
+initDebugUI(elements);
+elements.debugButton.addEventListener('click', handleDebug);
+elements.customTestsToggle.addEventListener('click', () => {
+  const form = elements.customTestsForm;
+  form.hidden = !form.hidden;
+  elements.customTestsToggle.textContent = form.hidden ? t('customTest.add') : t('customTest.hide');
+});
+elements.customTestAdd.addEventListener('click', handleAddCustomTest);
+elements.customTestExpected.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') handleAddCustomTest();
+});
 elements.runButton.addEventListener('click', handleRun);
 elements.resetButton.addEventListener('click', handleReset);
 elements.formatButton.addEventListener('click', handleFormat);
@@ -1139,7 +1360,29 @@ elements.authModalClose.addEventListener('click', closeAuthModal);
 elements.authModalBackdrop.addEventListener('click', closeAuthModal);
 elements.authConnectButton.addEventListener('click', handleConnect);
 elements.authCancelButton.addEventListener('click', closeAuthModal);
+
+if (elements.viewClusters) {
+  elements.viewClusters.addEventListener('click', () => {
+    ribbonView = 'clusters';
+    set(RIBBON_VIEW_KEY, ribbonView);
+    syncViewToggle();
+    updateRibbon();
+  });
+}
+
+if (elements.viewTrack) {
+  elements.viewTrack.addEventListener('click', () => {
+    ribbonView = 'track';
+    set(RIBBON_VIEW_KEY, ribbonView);
+    syncViewToggle();
+    updateRibbon();
+  });
+}
+
 onFormat(handleFormat);
+onChange((code) => {
+  if (currentExercise) saveDraft(currentExercise.id, code);
+});
 
 document.addEventListener('keydown', (e) => {
   if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
@@ -1172,6 +1415,7 @@ function applyI18nToDOM() {
   elements.browseButton.setAttribute('aria-label', t('nav.browseLabel'));
   document.querySelector('.sidebar-header h2').textContent = t('nav.exercises');
   elements.sidebarClose.setAttribute('aria-label', t('nav.closeSidebar'));
+  document.getElementById('sidebar').setAttribute('aria-label', t('nav.exerciseBrowser'));
   document.querySelector('.auth-modal-header h2').textContent = t('auth.signInTitle');
   elements.authModalClose.setAttribute('aria-label', t('auth.close'));
   document.querySelector('.auth-modal-text').textContent = t('auth.tokenPrompt');
@@ -1195,6 +1439,47 @@ function applyI18nToDOM() {
   elements.ribbon.setAttribute('aria-label', t('nav.conceptClusters'));
   document.querySelector('.leaderboard-header h2').textContent = t('leaderboard.title');
   elements.leaderboardClose.setAttribute('aria-label', t('leaderboard.close'));
+
+  elements.debugButton.textContent = t('debug.button');
+  elements.dbgStop.textContent = t('debug.stop');
+  elements.dbgStepBack.title = t('debug.stepBack');
+  elements.dbgStepBack.setAttribute('aria-label', t('debug.stepBack'));
+  elements.dbgStepInto.title = `${t('debug.stepInto')} (F11)`;
+  elements.dbgStepInto.setAttribute('aria-label', t('debug.stepInto'));
+  elements.dbgStepOver.title = `${t('debug.stepOver')} (F10)`;
+  elements.dbgStepOver.setAttribute('aria-label', t('debug.stepOver'));
+  elements.dbgStepOut.title = `${t('debug.stepOut')} (Shift+F11)`;
+  elements.dbgStepOut.setAttribute('aria-label', t('debug.stepOut'));
+  elements.dbgContinue.title = `${t('debug.continue')} (F5)`;
+  elements.dbgContinue.setAttribute('aria-label', t('debug.continue'));
+  elements.dbgContinueBack.title = t('debug.continueBack');
+  elements.dbgContinueBack.setAttribute('aria-label', t('debug.continueBack'));
+  elements.dbgReset.title = t('debug.reset');
+  elements.dbgReset.setAttribute('aria-label', t('debug.reset'));
+  elements.dbgTestPicker.title = t('debug.testPicker');
+  elements.dbgTestPicker.setAttribute('aria-label', t('debug.testPicker'));
+
+  document.querySelector('#debug-vars .debug-section-title').textContent = t('debug.variables');
+  document.querySelector('#debug-callstack .debug-section-title').textContent = t('debug.callStack');
+  document.querySelector('#debug-dataviz .debug-section-title').textContent = t('debug.data');
+
+  document.querySelector('#custom-tests-section .debug-section-title').textContent = t('customTest.title');
+  elements.customTestsToggle.textContent = t('customTest.add');
+  const testLabels = document.querySelectorAll('.custom-test-label');
+  if (testLabels[0]) {
+    const textNode = testLabels[0].firstChild;
+    if (textNode?.nodeType === Node.TEXT_NODE) textNode.textContent = t('customTest.inputLabel') + ' ';
+  }
+  if (testLabels[1]) {
+    const textNode = testLabels[1].firstChild;
+    if (textNode?.nodeType === Node.TEXT_NODE) textNode.textContent = t('customTest.expectedLabel') + ' ';
+  }
+  elements.customTestInput.placeholder = t('customTest.inputPlaceholder');
+  elements.customTestExpected.placeholder = t('customTest.expectedPlaceholder');
+  elements.customTestAdd.textContent = t('customTest.addButton');
+
+  if (elements.viewClusters) elements.viewClusters.textContent = t('ribbon.clusters');
+  if (elements.viewTrack) elements.viewTrack.textContent = t('ribbon.thirtyDays');
 
   renderLocaleSelector();
 }
@@ -1231,6 +1516,7 @@ async function boot() {
   applyI18nToDOM();
   setupOfflineIndicator();
   loadExercise(resolveStartExercise());
+  syncViewToggle();
   renderAuthState();
   if (isAuthenticated()) {
     const token = getToken();
@@ -1240,7 +1526,7 @@ async function boot() {
         .then(() => {
           updateProgressDisplay();
           renderStepper();
-          renderRibbon();
+          updateRibbon();
         })
         .catch(err => console.warn('Sync on boot failed:', err.message));
       if (get(CI_CONSENT_KEY)) {

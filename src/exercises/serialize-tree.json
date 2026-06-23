@@ -1,0 +1,25 @@
+{
+  "id": "serialize-tree",
+  "variantOf": null,
+  "variantOrder": 1,
+  "variantPrompt": null,
+  "title": "Serialize and Deserialize Binary Tree",
+  "difficulty": "Hard",
+  "description": "Implement two operations for a binary tree (represented as nested arrays `[val, left, right]`):\n\n- When `operation` is `\"serialize\"`: convert the tree to a string.\n- When `operation` is `\"deserialize\"`: convert a string back to the tree.\n\nYou decide the format. The serialize/deserialize pair must be inverse operations.\n\n**Note:** For `null` trees, serialize returns `\"null\"` and deserialize returns `null`.",
+  "functionName": "codec",
+  "params": ["root", "operation"],
+  "starterCode": "function codec(root, operation) {\n  // Your solution here\n  \n}",
+  "testCases": [
+    { "input": [[1,[2,null,null],[3,[4,null,null],[5,null,null]]],"serialize"], "expected": "1,2,null,null,3,4,null,null,5,null,null" },
+    { "input": ["1,2,null,null,3,4,null,null,5,null,null","deserialize"], "expected": [1,[2,null,null],[3,[4,null,null],[5,null,null]]] },
+    { "input": [null,"serialize"], "expected": "null" },
+    { "input": ["null","deserialize"], "expected": null }
+  ],
+  "hints": [
+    "Preorder traversal captures the tree structure completely if you include null markers.",
+    "For serialization: preorder walk, output value or 'null' for missing nodes.",
+    "For deserialization: split the string, use an index to consume values in preorder."
+  ],
+  "track": "30-days",
+  "day": 26
+}

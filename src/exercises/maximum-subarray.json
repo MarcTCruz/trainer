@@ -1,0 +1,26 @@
+{
+  "id": "maximum-subarray",
+  "variantOf": null,
+  "variantOrder": 1,
+  "variantPrompt": null,
+  "title": "Maximum Subarray",
+  "difficulty": "Medium",
+  "description": "Given an integer array `nums`, find the subarray with the largest sum and return its sum.\n\n**Example:**\n```\nnums = [-2, 1, -3, 4, -1, 2, 1, -5, 4]\nResult = 6\nExplanation: [4, -1, 2, 1] has the largest sum.\n```",
+  "functionName": "maxSubArray",
+  "params": ["nums"],
+  "starterCode": "function maxSubArray(nums) {\n  // Your solution here\n  \n}",
+  "testCases": [
+    { "input": [[-2, 1, -3, 4, -1, 2, 1, -5, 4]], "expected": 6 },
+    { "input": [[1]], "expected": 1 },
+    { "input": [[5, 4, -1, 7, 8]], "expected": 23 },
+    { "input": [[-1]], "expected": -1 },
+    { "input": [[-2, -1]], "expected": -1 }
+  ],
+  "hints": [
+    "At each position, you have two choices: start a new subarray or extend the current one.",
+    "Kadane's algorithm: track the maximum sum ending at the current position.",
+    "The answer is the maximum of all local maximums."
+  ],
+  "track": "30-days",
+  "day": 3
+}

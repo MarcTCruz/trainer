@@ -1,4 +1,42 @@
 {
+  "tracks": [
+    {
+      "id": "thirty-days",
+      "title": "30 Days of Code",
+      "days": [
+        { "day": 1,  "exerciseId": "two-sum",               "structure": "Array",       "phase": "foundations" },
+        { "day": 2,  "exerciseId": "contains-duplicate",     "structure": "Array",       "phase": "foundations" },
+        { "day": 3,  "exerciseId": "maximum-subarray",       "structure": "Array",       "phase": "foundations" },
+        { "day": 4,  "exerciseId": "valid-anagram",          "structure": "String",      "phase": "foundations", "revisits": ["day-2"] },
+        { "day": 5,  "exerciseId": "longest-substring",      "structure": "String",      "phase": "foundations" },
+        { "day": 6,  "exerciseId": "valid-parentheses",      "structure": "Stack",       "phase": "foundations", "revisits": ["day-5"] },
+        { "day": 7,  "exerciseId": "evaluate-rpn",           "structure": "Stack",       "phase": "foundations" },
+        { "day": 8,  "exerciseId": "queue-using-stacks",     "structure": "Queue",       "phase": "foundations", "revisits": ["day-6", "day-7"] },
+        { "day": 9,  "exerciseId": "reverse-linked-list",    "structure": "Linked List", "phase": "foundations" },
+        { "day": 10, "exerciseId": "linked-list-cycle",      "structure": "Linked List", "phase": "foundations" },
+        { "day": 11, "exerciseId": "group-anagrams",         "structure": "Hash Map",    "phase": "growth", "revisits": ["day-4"] },
+        { "day": 12, "exerciseId": "inorder-traversal",      "structure": "Binary Tree", "phase": "growth" },
+        { "day": 13, "exerciseId": "max-depth",              "structure": "Binary Tree", "phase": "growth" },
+        { "day": 14, "exerciseId": "validate-bst",           "structure": "BST",         "phase": "growth", "revisits": ["day-12"] },
+        { "day": 15, "exerciseId": "level-order",            "structure": "Binary Tree", "phase": "growth", "revisits": ["day-8", "day-12"] },
+        { "day": 16, "exerciseId": "merge-sort",             "structure": "Sorting",     "phase": "growth", "revisits": ["day-1"] },
+        { "day": 17, "exerciseId": "quick-sort",             "structure": "Sorting",     "phase": "growth" },
+        { "day": 18, "exerciseId": "binary-search",          "structure": "Searching",   "phase": "growth", "revisits": ["day-16", "day-17"] },
+        { "day": 19, "exerciseId": "number-of-islands",      "structure": "Graph",       "phase": "growth", "revisits": ["day-12"] },
+        { "day": 20, "exerciseId": "clone-graph",            "structure": "Graph",       "phase": "growth", "revisits": ["day-11"] },
+        { "day": 21, "exerciseId": "decode-string",          "structure": "Stack+String","phase": "synthesis" },
+        { "day": 22, "exerciseId": "construct-tree",         "structure": "Tree+Array",  "phase": "synthesis" },
+        { "day": 23, "exerciseId": "top-k-frequent",         "structure": "Hash+Array",  "phase": "synthesis" },
+        { "day": 24, "exerciseId": "add-two-numbers",        "structure": "Linked List", "phase": "synthesis" },
+        { "day": 25, "exerciseId": "course-schedule",        "structure": "Graph+Queue", "phase": "synthesis" },
+        { "day": 26, "exerciseId": "serialize-tree",         "structure": "Tree+Queue",  "phase": "synthesis" },
+        { "day": 27, "exerciseId": "container-water",        "structure": "Two Pointer", "phase": "synthesis" },
+        { "day": 28, "exerciseId": "daily-temperatures",     "structure": "Stack+Array", "phase": "synthesis" },
+        { "day": 29, "exerciseId": "longest-increasing-path","structure": "Graph+DP",    "phase": "synthesis" },
+        { "day": 30, "exerciseId": "lru-cache",              "structure": "Capstone",    "phase": "synthesis" }
+      ]
+    }
+  ],
   "clusters": [
     {
       "id": "stacks",

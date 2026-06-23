@@ -122,6 +122,11 @@
 
       <div class="main">
         <div class="exercise-panel">
+          <div class="ribbon-controls">
+            <button class="ribbon-view-btn active" id="view-clusters" type="button" aria-pressed="true">Clusters</button>
+            <button class="ribbon-view-btn" id="view-track" type="button" aria-pressed="false">30 Days</button>
+          </div>
+
           <nav
             class="learning-ribbon"
             id="learning-ribbon"
@@ -154,6 +159,7 @@
 
           <div class="controls">
             <button class="btn btn-primary" id="run-button">Run Code</button>
+            <button class="btn btn-debug" id="debug-button">Debug</button>
             <button class="btn btn-secondary" id="reset-button">Reset</button>
             <button class="btn btn-secondary" id="format-button">Format</button>
             <span class="shortcut-hint"
@@ -164,10 +170,58 @@
             >
           </div>
 
+          <div class="debug-toolbar" id="debug-toolbar" hidden>
+            <button class="dbg-btn" id="dbg-step-back" title="Step Back" aria-label="Step Back">⏪</button>
+            <button class="dbg-btn" id="dbg-step-into" title="Step Into (F11)" aria-label="Step Into">↓</button>
+            <button class="dbg-btn" id="dbg-step-over" title="Step Over (F10)" aria-label="Step Over">→</button>
+            <button class="dbg-btn" id="dbg-step-out" title="Step Out (Shift+F11)" aria-label="Step Out">↑</button>
+            <button class="dbg-btn" id="dbg-continue" title="Continue (F5)" aria-label="Continue">▶</button>
+            <button class="dbg-btn" id="dbg-continue-back" title="Continue Back" aria-label="Continue Back">◀</button>
+            <button class="dbg-btn" id="dbg-reset" title="Reset" aria-label="Reset">⏮</button>
+            <select class="dbg-test-picker" id="dbg-test-picker" title="Test case to debug" aria-label="Test case to debug"></select>
+            <span class="dbg-position" id="dbg-position">Step 0 / 0</span>
+            <button class="btn btn-secondary dbg-stop" id="dbg-stop">Stop Debug</button>
+          </div>
+
           <div class="wasm-status" id="wasm-status"></div>
 
           <div id="status-message" class="status-message"></div>
+
+          <div class="debug-panel" id="debug-panel" hidden>
+            <div class="debug-vars" id="debug-vars">
+              <h4 class="debug-section-title">Variables</h4>
+              <div class="debug-vars-content" id="debug-vars-content"></div>
+            </div>
+            <div class="debug-callstack" id="debug-callstack">
+              <h4 class="debug-section-title">Call Stack</h4>
+              <div class="debug-callstack-content" id="debug-callstack-content"></div>
+            </div>
+            <div class="debug-dataviz" id="debug-dataviz">
+              <h4 class="debug-section-title">Data</h4>
+              <canvas id="debug-canvas"></canvas>
+            </div>
+          </div>
+
           <div class="results-section" id="results-container"></div>
+
+          <div class="custom-tests-section" id="custom-tests-section">
+            <div class="custom-tests-header">
+              <h4 class="debug-section-title">Your Test Cases</h4>
+              <button class="btn btn-ghost custom-tests-toggle" id="custom-tests-toggle" type="button">+ Add</button>
+            </div>
+            <div class="custom-tests-form" id="custom-tests-form" hidden>
+              <div class="custom-tests-inputs">
+                <label class="custom-test-label">Input (JSON args)
+                  <input type="text" class="custom-test-input" id="custom-test-input" placeholder='e.g. "([])"'>
+                </label>
+                <label class="custom-test-label">Expected (JSON)
+                  <input type="text" class="custom-test-input" id="custom-test-expected" placeholder="e.g. true">
+                </label>
+              </div>
+              <button class="btn btn-secondary" id="custom-test-add" type="button">Add Test</button>
+            </div>
+            <div class="custom-tests-list" id="custom-tests-list"></div>
+          </div>
         </div>
       </div>
 

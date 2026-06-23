@@ -1,0 +1,24 @@
+{
+  "id": "level-order",
+  "variantOf": null,
+  "variantOrder": 1,
+  "variantPrompt": null,
+  "title": "Binary Tree Level Order Traversal",
+  "difficulty": "Medium",
+  "description": "Given a binary tree represented as `[val, left, right]`, return its **level order traversal** as an array of arrays, where each inner array contains the values at that level.\n\nUse `null` for missing children. Use `null` as the root for an empty tree.\n\n**Example:**\n```\nroot = [3, [9, null, null], [20, [15, null, null], [7, null, null]]]\nResult = [[3], [9, 20], [15, 7]]\n```",
+  "functionName": "levelOrder",
+  "params": ["root"],
+  "starterCode": "function levelOrder(root) {\n  // Your solution here\n  \n}",
+  "testCases": [
+    { "input": [[3, [9, null, null], [20, [15, null, null], [7, null, null]]]], "expected": [[3], [9, 20], [15, 7]] },
+    { "input": [[1, null, null]], "expected": [[1]] },
+    { "input": [null], "expected": [] }
+  ],
+  "hints": [
+    "BFS processes nodes level by level — perfect for this.",
+    "Use an array as a queue. Process all nodes at the current level before moving to the next.",
+    "Track the level size at the start of each iteration."
+  ],
+  "track": "30-days",
+  "day": 15
+}

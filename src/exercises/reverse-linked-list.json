@@ -1,0 +1,25 @@
+{
+  "id": "reverse-linked-list",
+  "variantOf": null,
+  "variantOrder": 1,
+  "variantPrompt": null,
+  "title": "Reverse Linked List",
+  "difficulty": "Easy",
+  "description": "Given the `head` of a singly linked list (represented as an array of values), reverse the list and return the reversed list.\n\nExample: `[1,2,3,4,5]` → `[5,4,3,2,1]`",
+  "functionName": "reverseList",
+  "params": ["head"],
+  "starterCode": "function reverseList(head) {\n  // Your solution here\n  \n}",
+  "testCases": [
+    { "input": [[1, 2, 3, 4, 5]], "expected": [5, 4, 3, 2, 1] },
+    { "input": [[1, 2]], "expected": [2, 1] },
+    { "input": [[1]], "expected": [1] },
+    { "input": [[]], "expected": [] }
+  ],
+  "hints": [
+    "Build a linked list from the array, then reverse it by changing pointers.",
+    "Use three pointers: prev, current, and next.",
+    "At each step: save next, point current.next to prev, advance prev and current."
+  ],
+  "track": "30-days",
+  "day": 9
+}

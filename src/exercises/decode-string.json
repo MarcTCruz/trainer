@@ -1,0 +1,26 @@
+{
+  "id": "decode-string",
+  "variantOf": null,
+  "variantOrder": 1,
+  "variantPrompt": null,
+  "title": "Decode String",
+  "difficulty": "Medium",
+  "description": "Given an encoded string, return the decoded string.\n\nThe encoding rule: `k[encoded_string]` means `encoded_string` repeated exactly `k` times. You may assume the input is always valid; there are no extra spaces, brackets are well-formed, etc.\n\nNesting is allowed: `\"3[a2[c]]\"` → `\"accaccacc\"`.",
+  "functionName": "decodeString",
+  "params": ["s"],
+  "starterCode": "function decodeString(s) {\n  // Your solution here\n  \n}",
+  "testCases": [
+    { "input": ["3[a]2[bc]"], "expected": "aaabcbc" },
+    { "input": ["3[a2[c]]"], "expected": "accaccacc" },
+    { "input": ["2[abc]3[cd]ef"], "expected": "abcabccdcdcdef" },
+    { "input": ["abc"], "expected": "abc" },
+    { "input": ["10[a]"], "expected": "aaaaaaaaaa" }
+  ],
+  "hints": [
+    "Use a stack to handle nesting — push current string and count when you see '['.",
+    "When you see ']', pop and repeat the current string.",
+    "Build numbers character by character (they can be multi-digit)."
+  ],
+  "track": "30-days",
+  "day": 21
+}

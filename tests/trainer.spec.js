@@ -5,13 +5,8 @@ import { test, expect } from '@playwright/test';
 // ---------------------------------------------------------------------------
 
 async function pasteCode(page, code) {
-  const editor = page.locator('.cm-content');
-  await editor.click();
-  await page.keyboard.press('Control+a');
-  await page.evaluate((c) => {
-    document.execCommand('insertText', false, c);
-  }, code);
-  await page.waitForTimeout(200);
+  await page.waitForFunction(() => window.__testEditor);
+  await page.evaluate((c) => window.__testEditor.setCode(c), code);
 }
 
 // ---------------------------------------------------------------------------
@@ -1612,9 +1607,20 @@ test('i18n: every text-setting line in source uses t() or is exempt', async () =
     /rank\.textContent/,
     /userLink\.textContent/,
     /solvedDisplay\.textContent/,
+    /toggle\.textContent/,
+    /valEl\.textContent/,
+    /el\.textContent\s*=\s*frame/,
+    /container\.textContent\s*=\s*'—'/,
+    /\.textContent\s*=\s*msg/,
+    /\.textContent\s*=\s*preview/,
+    /\.textContent\s*=\s*text$/,
+    /body\.textContent/,
+    /opt\.textContent/,
+    /del\.textContent/,
+    /violations\.textContent/,
   ];
 
-  const files = ['src/app.js', 'src/runner.js'];
+  const files = ['src/app.js', 'src/runner.js', 'src/debugger/debugUI.js'];
   const violations = [];
 
   for (const file of files) {
@@ -1647,6 +1653,170 @@ test('locale selection persists across page reload', async ({ page }) => {
   // Should still be Portuguese
   await expect(page.locator('#run-button')).toHaveText('Executar', { timeout: 5000 });
   await expect(page.locator('#browse-button')).toHaveText('Explorar');
+});
+
+test('i18n: every hardcoded English string in index.html has a matching translation key', async () => {
+  const { readFileSync } = await import('fs');
+  const { join } = await import('path');
+
+  const html = readFileSync(join(process.cwd(), 'index.html'), 'utf-8');
+  const en = JSON.parse(readFileSync(join(process.cwd(), 'src', 'i18n', 'en.json'), 'utf-8'));
+
+  const enExact = new Set(Object.values(en));
+  const enTemplateRegexes = Object.values(en)
+    .filter(v => /\{[^}]+\}/.test(v))
+    .map(v => new RegExp('^' + v.replace(/[.*+?^${}()|[\]\\]/g, '\\$&').replace(/\\{[^}]+\\}/g, '.+') + '$'));
+
+  function normalize(text) {
+    return text
+      .replace(/&middot;/g, '·').replace(/&ldquo;/g, '"').replace(/&rdquo;/g, '"')
+      .replace(/&times;/g, '×').replace(/&amp;/g, '&')
+      .replace(/\s+/g, ' ')
+      .trim();
+  }
+
+  function hasCoverage(text) {
+    const n = normalize(text);
+    if (!n) return true;
+    if (enExact.has(n)) return true;
+    if (enTemplateRegexes.some(re => re.test(n))) return true;
+    if ([...enExact].some(v => v.length > 3 && n.includes(v))) return true;
+    return false;
+  }
+
+  const ELEMENT_RE = /<(button|h[1-6]|span|label|p|a|select)\b[^>]*>([^<]+)<\//gi;
+  const ATTR_RE = /<[^>]+\b(title|aria-label)\s*=\s*["']([^"']+)["']/gi;
+  const PLACEHOLDER_RE = /<[^>]+\bplaceholder\s*=\s*(?:"([^"]*)"|'([^']*)')/gi;
+
+  const EXEMPT_RE = /^[⏪↓→↑▶◀⏮🏆✕×·\d\s.]+$|^(Ctrl|Enter|Shift|Alt|F)$/;
+  const EXEMPT_CLASSES = ['stat-value', 'shortcut-hint', 'cm-'];
+
+  function isExempt(text, fullTag) {
+    if (!text || /^\s*$/.test(text)) return true;
+    if (EXEMPT_RE.test(text.trim())) return true;
+    if (EXEMPT_CLASSES.some(c => fullTag.includes(c))) return true;
+    return false;
+  }
+
+  const violations = [];
+
+  for (const match of html.matchAll(ELEMENT_RE)) {
+    const [full, tag, text] = match;
+    const norm = normalize(text);
+    if (isExempt(norm, full)) continue;
+    if (!hasCoverage(text)) {
+      violations.push(`<${tag}> text="${norm}" — no matching en.json value`);
+    }
+  }
+
+  for (const match of html.matchAll(ATTR_RE)) {
+    const [full, attr, value] = match;
+    if (isExempt(value, full)) continue;
+    if (!hasCoverage(value)) {
+      const idMatch = full.match(/id=["']([^"']+)["']/);
+      violations.push(`${attr}="${value}" on ${idMatch ? '#' + idMatch[1] : 'element'} — no matching en.json value`);
+    }
+  }
+
+  for (const match of html.matchAll(PLACEHOLDER_RE)) {
+    const [full, dq, sq] = match;
+    const value = dq ?? sq;
+    if (isExempt(value, full)) continue;
+    if (!hasCoverage(value)) {
+      const idMatch = full.match(/id=["']([^"']+)["']/);
+      violations.push(`placeholder="${value}" on ${idMatch ? '#' + idMatch[1] : 'element'} — no matching en.json value`);
+    }
+  }
+
+  expect(violations, `HTML text without translation key:\n${violations.join('\n')}`).toEqual([]);
+});
+
+test('i18n: locale switch translates all UI chrome including debug and custom tests', async ({ page }) => {
+  const { readFileSync } = await import('fs');
+  const { join } = await import('path');
+
+  const en = JSON.parse(readFileSync(join(process.cwd(), 'src', 'i18n', 'en.json'), 'utf-8'));
+  const ptBR = JSON.parse(readFileSync(join(process.cwd(), 'src', 'i18n', 'pt-BR.json'), 'utf-8'));
+
+  await page.goto('/');
+
+  const BUTTONS = [
+    { sel: '#run-button', key: 'run.runCode' },
+    { sel: '#reset-button', key: 'run.reset' },
+    { sel: '#format-button', key: 'run.format' },
+    { sel: '#debug-button', key: 'debug.button' },
+    { sel: '#browse-button', key: 'nav.browse' },
+    { sel: '#dbg-stop', key: 'debug.stop' },
+    { sel: '#custom-tests-toggle', key: 'customTest.add' },
+    { sel: '#custom-test-add', key: 'customTest.addButton' },
+  ];
+
+  const SECTION_TITLES = [
+    { sel: '#debug-vars .debug-section-title', key: 'debug.variables' },
+    { sel: '#debug-callstack .debug-section-title', key: 'debug.callStack' },
+    { sel: '#debug-dataviz .debug-section-title', key: 'debug.data' },
+    { sel: '#custom-tests-section .debug-section-title', key: 'customTest.title' },
+    { sel: '.sidebar-header h2', key: 'nav.exercises' },
+    { sel: '.leaderboard-header h2', key: 'leaderboard.title' },
+  ];
+
+  const ARIA_LABELS = [
+    { sel: '#dbg-step-back', key: 'debug.stepBack' },
+    { sel: '#dbg-step-into', key: 'debug.stepInto' },
+    { sel: '#dbg-step-over', key: 'debug.stepOver' },
+    { sel: '#dbg-step-out', key: 'debug.stepOut' },
+    { sel: '#dbg-continue', key: 'debug.continue' },
+    { sel: '#dbg-continue-back', key: 'debug.continueBack' },
+    { sel: '#dbg-reset', key: 'debug.reset' },
+    { sel: '#dbg-test-picker', key: 'debug.testPicker' },
+  ];
+
+  const PLACEHOLDERS = [
+    { sel: '#custom-test-input', key: 'customTest.inputPlaceholder' },
+    { sel: '#custom-test-expected', key: 'customTest.expectedPlaceholder' },
+    { sel: '#token-input', key: 'auth.tokenPlaceholder' },
+  ];
+
+  for (const { sel, key } of BUTTONS) {
+    await expect(page.locator(sel), `${sel} en`).toHaveText(en[key]);
+  }
+  for (const { sel, key } of SECTION_TITLES) {
+    await expect(page.locator(sel), `${sel} en`).toHaveText(en[key]);
+  }
+  for (const { sel, key } of ARIA_LABELS) {
+    expect(
+      await page.locator(sel).getAttribute('aria-label'),
+      `${sel} aria-label en`
+    ).toBe(en[key]);
+  }
+  for (const { sel, key } of PLACEHOLDERS) {
+    expect(
+      await page.locator(sel).getAttribute('placeholder'),
+      `${sel} placeholder en`
+    ).toBe(en[key]);
+  }
+
+  await page.locator('.locale-btn', { hasText: 'pt-BR' }).click();
+  await expect(page.locator('#run-button')).toHaveText(ptBR['run.runCode']);
+
+  for (const { sel, key } of BUTTONS) {
+    await expect(page.locator(sel), `${sel} pt-BR`).toHaveText(ptBR[key]);
+  }
+  for (const { sel, key } of SECTION_TITLES) {
+    await expect(page.locator(sel), `${sel} pt-BR`).toHaveText(ptBR[key]);
+  }
+  for (const { sel, key } of ARIA_LABELS) {
+    expect(
+      await page.locator(sel).getAttribute('aria-label'),
+      `${sel} aria-label pt-BR`
+    ).toBe(ptBR[key]);
+  }
+  for (const { sel, key } of PLACEHOLDERS) {
+    expect(
+      await page.locator(sel).getAttribute('placeholder'),
+      `${sel} placeholder pt-BR`
+    ).toBe(ptBR[key]);
+  }
 });
 
 // ---------------------------------------------------------------------------

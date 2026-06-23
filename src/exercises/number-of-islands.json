@@ -1,0 +1,24 @@
+{
+  "id": "number-of-islands",
+  "variantOf": null,
+  "variantOrder": 1,
+  "variantPrompt": null,
+  "title": "Number of Islands",
+  "difficulty": "Medium",
+  "description": "Given a 2D grid of `\"1\"`s (land) and `\"0\"`s (water), count the number of **islands**.\n\nAn island is surrounded by water and is formed by connecting adjacent land cells **horizontally or vertically**.\n\n**Example:**\n```\ngrid = [\n  [\"1\",\"1\",\"1\",\"1\",\"0\"],\n  [\"1\",\"1\",\"0\",\"1\",\"0\"],\n  [\"1\",\"1\",\"0\",\"0\",\"0\"],\n  [\"0\",\"0\",\"0\",\"0\",\"0\"]\n]\nResult = 1\n```",
+  "functionName": "numIslands",
+  "params": ["grid"],
+  "starterCode": "function numIslands(grid) {\n  // Your solution here\n  \n}",
+  "testCases": [
+    { "input": [[["1","1","1","1","0"],["1","1","0","1","0"],["1","1","0","0","0"],["0","0","0","0","0"]]], "expected": 1 },
+    { "input": [[["1","1","0","0","0"],["1","1","0","0","0"],["0","0","1","0","0"],["0","0","0","1","1"]]], "expected": 3 },
+    { "input": [[]], "expected": 0 }
+  ],
+  "hints": [
+    "Scan the grid. When you find a '1', that's a new island — mark it visited.",
+    "Use DFS or BFS to mark all connected land cells as visited.",
+    "Each unvisited '1' you encounter starts a new island count."
+  ],
+  "track": "30-days",
+  "day": 19
+}

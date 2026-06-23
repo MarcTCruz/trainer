@@ -1,0 +1,33 @@
+{
+  "id": "construct-tree",
+  "variantOf": null,
+  "variantOrder": 1,
+  "variantPrompt": null,
+  "title": "Construct Binary Tree from Traversals",
+  "difficulty": "Medium",
+  "description": "Given two arrays representing the **preorder** and **inorder** traversal of a binary tree, reconstruct the tree and return it.\n\nThe tree is represented as nested arrays: `[val, left, right]`, where `left` and `right` are either nested arrays or `null`.\n\nExample: preorder `[3,9,20,15,7]`, inorder `[9,3,15,20,7]` → `[3,[9,null,null],[20,[15,null,null],[7,null,null]]]`",
+  "functionName": "buildTree",
+  "params": ["preorder", "inorder"],
+  "starterCode": "function buildTree(preorder, inorder) {\n  // Your solution here\n  \n}",
+  "testCases": [
+    {
+      "input": [[3, 9, 20, 15, 7], [9, 3, 15, 20, 7]],
+      "expected": [3, [9, null, null], [20, [15, null, null], [7, null, null]]]
+    },
+    {
+      "input": [[-1], [-1]],
+      "expected": [-1, null, null]
+    },
+    {
+      "input": [[1, 2], [2, 1]],
+      "expected": [1, [2, null, null], null]
+    }
+  ],
+  "hints": [
+    "The first element of preorder is always the root.",
+    "Find the root's position in inorder — everything left is left subtree, everything right is right subtree.",
+    "Recurse on the left and right portions of both arrays."
+  ],
+  "track": "30-days",
+  "day": 22
+}

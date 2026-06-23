@@ -1,0 +1,24 @@
+{
+  "id": "group-anagrams",
+  "variantOf": null,
+  "variantOrder": 1,
+  "variantPrompt": null,
+  "title": "Group Anagrams",
+  "difficulty": "Medium",
+  "description": "Given an array of strings `strs`, group the anagrams together. Return the result as an array of arrays.\n\nAnagrams are words formed by rearranging the same letters.\n\n**For deterministic output:** sort each group alphabetically, then sort the groups by their first element.\n\n**Example:**\n```\nstrs = [\"eat\",\"tea\",\"tan\",\"ate\",\"nat\",\"bat\"]\nResult = [[\"ate\",\"eat\",\"tea\"],[\"bat\"],[\"nat\",\"tan\"]]\n```",
+  "functionName": "groupAnagrams",
+  "params": ["strs"],
+  "starterCode": "function groupAnagrams(strs) {\n  // Your solution here\n  \n}",
+  "testCases": [
+    { "input": [["eat","tea","tan","ate","nat","bat"]], "expected": [["ate","eat","tea"],["bat"],["nat","tan"]] },
+    { "input": [[""]], "expected": [[""]] },
+    { "input": [["a"]], "expected": [["a"]] }
+  ],
+  "hints": [
+    "Anagrams have the same characters — what if you sorted each word's letters?",
+    "Use the sorted letters as a key to group words.",
+    "A plain object works as a hash map: `obj[key] = obj[key] || []`"
+  ],
+  "track": "30-days",
+  "day": 11
+}

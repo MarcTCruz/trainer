@@ -1,0 +1,26 @@
+{
+  "id": "merge-sort",
+  "variantOf": null,
+  "variantOrder": 1,
+  "variantPrompt": null,
+  "title": "Merge Sort",
+  "difficulty": "Medium",
+  "description": "Implement **merge sort**. Given an array of numbers, return a new sorted array in ascending order.\n\nMerge sort is a divide-and-conquer algorithm: split the array in half, recursively sort each half, then merge the sorted halves together.\n\n**Example:**\n```\nnums = [5, 2, 3, 1]\nResult = [1, 2, 3, 5]\n```",
+  "functionName": "mergeSort",
+  "params": ["nums"],
+  "starterCode": "function mergeSort(nums) {\n  // Your solution here\n  \n}",
+  "testCases": [
+    { "input": [[5, 2, 3, 1]], "expected": [1, 2, 3, 5] },
+    { "input": [[5, 1, 1, 2, 0, 0]], "expected": [0, 0, 1, 1, 2, 5] },
+    { "input": [[1]], "expected": [1] },
+    { "input": [[]], "expected": [] },
+    { "input": [[3, 1]], "expected": [1, 3] }
+  ],
+  "hints": [
+    "Divide the array in half, sort each half, then merge.",
+    "The merge step: compare elements from both halves, take the smaller one.",
+    "Base case: array of 0 or 1 elements is already sorted."
+  ],
+  "track": "30-days",
+  "day": 16
+}

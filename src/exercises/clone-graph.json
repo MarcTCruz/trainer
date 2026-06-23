@@ -1,0 +1,24 @@
+{
+  "id": "clone-graph",
+  "variantOf": null,
+  "variantOrder": 1,
+  "variantPrompt": null,
+  "title": "Clone Graph",
+  "difficulty": "Medium",
+  "description": "Given a graph represented as an **adjacency list** (an array of arrays, 1-indexed), return a **deep clone** of the graph with the same structure.\n\nThe input is an array where index `i` (1-based) holds an array of neighbor indices for node `i`.\n\nThe clone must be a completely new array structure — not a reference to the original.\n\n**Example:**\n```\nadjList = [[2,4],[1,3],[2,4],[1,3]]\nNode 1 connects to: 2, 4\nNode 2 connects to: 1, 3\n...\nResult = [[2,4],[1,3],[2,4],[1,3]]  (a deep copy)\n```",
+  "functionName": "cloneGraph",
+  "params": ["adjList"],
+  "starterCode": "function cloneGraph(adjList) {\n  // Your solution here\n  \n}",
+  "testCases": [
+    { "input": [[[2,4],[1,3],[2,4],[1,3]]], "expected": [[2,4],[1,3],[2,4],[1,3]] },
+    { "input": [[[]]], "expected": [[]] },
+    { "input": [[]], "expected": [] }
+  ],
+  "hints": [
+    "Use a map to track cloned nodes and avoid infinite loops.",
+    "BFS or DFS both work — visit each node, clone it, then clone its neighbors.",
+    "The tricky part is handling cycles — the visited map prevents revisiting."
+  ],
+  "track": "30-days",
+  "day": 20
+}
