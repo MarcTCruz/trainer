@@ -85,28 +85,70 @@ Aim for at least 5 test cases covering:
 
 Valid `id` examples: `two-sum`, `valid-parentheses`, `min-stack`, `lru-cache2`.
 
-## How to test locally
+## How to Contribute an Exercise
 
-1. Copy `src/exercises/_template.json` to `src/exercises/<your-id>.json`.
-2. Fill in all fields.
-3. Run the validator:
+1. **Fork the repo** and create a feature branch.
 
-```bash
-node scripts/validate-exercise.js src/exercises/<your-id>.json
-```
+2. **Copy the template** to `src/exercises/<your-id>.json`:
+   ```bash
+   cp src/exercises/_template.json src/exercises/<your-id>.json
+   ```
+   Fill in all required fields.
 
-4. Add your exercise to `src/exercises/registry.json` (the ordered list the app reads). Place it in the appropriate difficulty section.
-5. Run the app and verify the exercise renders and test cases execute correctly:
+3. **Register it in `src/exercise-loader.js`**:
+   - Add an import at the top with the other imports:
+     ```js
+     import yourExercise from './exercises/your-exercise-id.json';
+     ```
+   - Add an entry to the `exercises` Map:
+     ```js
+     [yourExercise.id, yourExercise],
+     ```
 
-```bash
-pnpm dev
-```
+4. **Optionally add it to a cluster or track** in `src/exercises/registry.json`. Place it in the relevant cluster's `exercises` array, or add it as a new cluster if no existing one fits.
+
+5. **Run the validator** to catch schema errors:
+   ```bash
+   node scripts/validate-exercise.js src/exercises/<your-id>.json
+   ```
+
+6. **Run the test suite** to confirm nothing is broken:
+   ```bash
+   npx playwright test
+   ```
+
+7. **Open a PR** with a brief description of the exercise and the algorithm concept it teaches.
+
+## Exercise Quality Guidelines
+
+**Problem statement**
+- State the input, output, and constraints clearly. Include a short worked example in the description itself.
+- Markdown is supported: use backticks for `inline code` and triple backticks for blocks.
+
+**Test cases**
+- 5–8 cases is the sweet spot. Cover: a typical case, empty/zero/null input, a boundary value (length 1), and at least one negative or false result.
+- Avoid redundant cases that test the same code path.
+
+**Hints**
+- 2–4 hints ordered from conceptual to near-implementation.
+- Good hints narrow the search space without naming the algorithm outright.
+- Example ladder: "What data structure gives O(1) lookup?" → "A hash map stores each value's index." → "Check the complement before inserting."
+
+**Difficulty**
+- `Easy` — one data structure or pattern applied directly.
+- `Medium` — two concepts combined, or a non-obvious optimization.
+- `Hard` — novel insight, multi-step algorithm, or advanced data structure.
+
+**Variants**
+- A variant extends a base exercise by adding a new constraint or dimension.
+- Set `variantOf` to the base `id`, increment `variantOrder`, and write a `variantPrompt` that frames the new challenge relative to the solution the student just wrote.
+- Submit a base + its variants together in one PR.
 
 ## PR requirements
 
 - One exercise per PR (or a base + its direct variants).
-- `node scripts/validate-exercise.js` exits 0 with no errors.
-- Exercise appears in `registry.json` in the correct difficulty section.
+- `node scripts/validate-exercise.js` exits 0.
+- Exercise is registered in `src/exercise-loader.js`.
 - At least 5 test cases (see [Test cases](#test-cases) for coverage guidelines).
 - No changes to `scripts/validate-exercise.js` or `src/exercises/_template.json` unless the PR is specifically updating the schema.
 
