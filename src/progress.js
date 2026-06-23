@@ -101,7 +101,21 @@ export function getProgress() {
 export function getSavedCode(exerciseId) {
   const state = loadState();
   const entry = state.completedExercises[exerciseId];
-  return entry ? entry.code : null;
+  if (entry) return entry.code;
+  return getDraft(exerciseId);
+}
+
+const DRAFTS_KEY = 'trainer_drafts';
+
+export function saveDraft(exerciseId, code) {
+  const drafts = get(DRAFTS_KEY) ?? {};
+  drafts[exerciseId] = code;
+  set(DRAFTS_KEY, drafts);
+}
+
+export function getDraft(exerciseId) {
+  const drafts = get(DRAFTS_KEY) ?? {};
+  return drafts[exerciseId] ?? null;
 }
 
 export function addBonusXp(exerciseId, newBonus) {

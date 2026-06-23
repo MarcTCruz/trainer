@@ -7,8 +7,11 @@ import {
   rectangularSelection,
   crosshairCursor,
   highlightSpecialChars,
+  Decoration,
+  gutter,
+  GutterMarker,
 } from '@codemirror/view'
-import { EditorState } from '@codemirror/state'
+import { EditorState, StateField, StateEffect, RangeSet } from '@codemirror/state'
 import { history, defaultKeymap, historyKeymap } from '@codemirror/commands'
 import {
   foldGutter,
@@ -47,9 +50,112 @@ const editorOverrides = EditorView.theme(
 )
 
 let formatCallback = null
+let breakpointCallback = null
+let changeCallback = null
 
 export function onFormat(cb) {
   formatCallback = cb
+}
+
+export function onBreakpointToggle(cb) {
+  breakpointCallback = cb
+}
+
+export function onChange(cb) {
+  changeCallback = cb
+}
+
+class BreakpointMarker extends GutterMarker {
+  toDOM() {
+    const el = document.createElement('div')
+    el.className = 'cm-debugger-breakpoint'
+    el.textContent = '●'
+    return el
+  }
+}
+
+const breakpointMarker = new BreakpointMarker()
+
+const breakpointState = StateField.define({
+  create() {
+    return new Set()
+  },
+  update(value, tr) {
+    const next = new Set(value)
+    for (const effect of tr.effects) {
+      if (effect.is(toggleBreakpointEffect)) {
+        const line = effect.value
+        if (next.has(line)) {
+          next.delete(line)
+        } else {
+          next.add(line)
+        }
+      }
+    }
+    return next
+  },
+})
+
+const toggleBreakpointEffect = StateEffect.define()
+
+const setDebugLineEffect = StateEffect.define()
+
+const debugLineState = StateField.define({
+  create() {
+    return Decoration.none
+  },
+  update(value, tr) {
+    for (const effect of tr.effects) {
+      if (effect.is(setDebugLineEffect)) {
+        const lineNum = effect.value
+        if (lineNum < 0) return Decoration.none
+        const line = tr.state.doc.line(lineNum)
+        return Decoration.set([
+          Decoration.line({ class: 'cm-debugger-active-line' }).range(line.from),
+        ])
+      }
+    }
+    return value.map(tr.changes)
+  },
+  provide(field) {
+    return EditorView.decorations.from(field)
+  },
+})
+
+const breakpointGutter = gutter({
+  class: 'cm-breakpoint-gutter',
+  markers(view) {
+    const bps = view.state.field(breakpointState)
+    const markers = []
+    for (const lineNum of bps) {
+      if (lineNum > view.state.doc.lines) continue
+      const line = view.state.doc.line(lineNum)
+      markers.push(breakpointMarker.range(line.from))
+    }
+    return markers.length ? RangeSet.of(markers, true) : RangeSet.empty
+  },
+  domEventHandlers: {
+    mousedown(view, line) {
+      const lineNum = view.state.doc.lineAt(line.from).number
+      view.dispatch({ effects: toggleBreakpointEffect.of(lineNum) })
+      const bps = view.state.field(breakpointState)
+      if (breakpointCallback) breakpointCallback(lineNum, bps)
+      return true
+    },
+  },
+})
+
+export function setDebugLine(editor, lineNumber) {
+  editor.dispatch({ effects: setDebugLineEffect.of(lineNumber) })
+}
+
+export function toggleBreakpoint(editor, lineNumber) {
+  editor.dispatch({ effects: toggleBreakpointEffect.of(lineNumber) })
+  return editor.state.field(breakpointState)
+}
+
+export function clearDebugDecorations(editor) {
+  editor.dispatch({ effects: setDebugLineEffect.of(-1) })
 }
 
 const formatKeymap = keymap.of([
@@ -67,6 +173,9 @@ export function createEditor(parentElement, initialCode) {
     doc: initialCode,
     extensions: [
       lineNumbers(),
+      breakpointGutter,
+      breakpointState,
+      debugLineState,
       highlightActiveLineGutter(),
       highlightSpecialChars(),
       history(),
@@ -85,6 +194,9 @@ export function createEditor(parentElement, initialCode) {
       syntaxHighlighting(oneDarkHighlightStyle),
       formatKeymap,
       editorOverrides,
+      EditorView.updateListener.of((update) => {
+        if (update.docChanged && changeCallback) changeCallback(update.state.doc.toString())
+      }),
     ],
   })
 
