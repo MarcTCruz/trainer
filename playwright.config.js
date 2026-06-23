@@ -9,7 +9,7 @@ export default defineConfig({
   },
   webServer: {
     command: 'pnpm run build && pnpm run preview --port 4173',
-    port: 4173,
+    url: 'http://localhost:4173/trainer/',
     reuseExistingServer: true,
     timeout: 60000,
   },
