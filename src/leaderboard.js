@@ -20,12 +20,16 @@ export async function fetchLeaderboard() {
     const r = await fetch(url);
     if (!r.ok) continue;
     const data = await r.json();
-    const passed = Object.values(data.exercises ?? {}).filter(e => e.status === 'pass').length;
+    const exerciseEntries = Object.entries(data.exercises ?? {});
+    const passed = exerciseEntries.filter(([, e]) => e.status === 'pass').length;
+    const passedIds = exerciseEntries.filter(([, e]) => e.status === 'pass').map(([id]) => id);
     entries.push({
       user: data.user,
       passed,
-      total: Object.keys(data.exercises ?? {}).length,
+      total: exerciseEntries.length,
       verified_at: data.verified_at,
+      exerciseIds: passedIds,
+      streak: data.streak ?? 0,
     });
   }
 

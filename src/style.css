@@ -1292,6 +1292,29 @@ body {
   align-self: center;
 }
 
+.leaderboard-filter {
+  background: var(--bg-card);
+  color: var(--text-primary);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 6px 10px;
+  font-size: 0.85rem;
+  width: 100%;
+  cursor: pointer;
+  margin-bottom: 8px;
+}
+
+.leaderboard-filter:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.streak-badge {
+  display: inline;
+  margin-left: 4px;
+  cursor: help;
+}
+
 /* Code Quality lint section */
 .lint-section {
   margin-top: 12px;

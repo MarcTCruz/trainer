@@ -25,6 +25,7 @@ import {
   getVariantsOf,
   getCluster,
   getAllClusters,
+  getAllTracks,
   getTrack,
   getTrackExercises
 } from './exercise-loader.js';
@@ -1260,20 +1261,86 @@ function closeLeaderboard() {
   elements.leaderboardBackdrop.classList.remove('open');
 }
 
-function renderLeaderboard() {
-  const container = elements.leaderboardContent;
-  container.innerHTML = '';
+function streakBadge(streak) {
+  if (streak >= 100) return { emoji: '💎', key: 'leaderboard.streak100' };
+  if (streak >= 30)  return { emoji: '⭐', key: 'leaderboard.streak30' };
+  if (streak >= 7)   return { emoji: '🔥', key: 'leaderboard.streak7' };
+  return null;
+}
 
-  const cached = get(LEADERBOARD_KEY);
-  if (!cached || cached.length === 0) {
+function buildLeaderboardFilter(cached, onFilter) {
+  const select = document.createElement('select');
+  select.className = 'leaderboard-filter';
+
+  const allOpt = document.createElement('option');
+  allOpt.value = '';
+  allOpt.textContent = t('leaderboard.filterAll');
+  select.appendChild(allOpt);
+
+  getAllTracks().forEach(track => {
+    const opt = document.createElement('option');
+    opt.value = `track:${track.id}`;
+    opt.textContent = t('leaderboard.filterTrack');
+    select.appendChild(opt);
+  });
+
+  getAllClusters().forEach(cluster => {
+    const opt = document.createElement('option');
+    opt.value = `cluster:${cluster.id}`;
+    opt.textContent = cluster.title;
+    select.appendChild(opt);
+  });
+
+  select.addEventListener('change', () => onFilter(select.value, cached));
+  return select;
+}
+
+function filterEntries(entries, filterValue) {
+  if (!filterValue) return entries;
+
+  if (filterValue.startsWith('track:')) {
+    const trackId = filterValue.slice('track:'.length);
+    const trackExercises = getTrackExercises(trackId);
+    const trackIds = new Set(trackExercises.map(e => e.id));
+    return entries
+      .map(entry => {
+        const passedIds = (entry.exerciseIds ?? []).filter(id => trackIds.has(id));
+        return { ...entry, passed: passedIds.length, total: trackIds.size, exerciseIds: passedIds };
+      })
+      .filter(entry => entry.passed > 0)
+      .sort((a, b) => b.passed - a.passed || new Date(a.verified_at) - new Date(b.verified_at));
+  }
+
+  if (filterValue.startsWith('cluster:')) {
+    const clusterId = filterValue.slice('cluster:'.length);
+    const clusterData = getAllClusters().find(c => c.id === clusterId);
+    const clusterIds = new Set((clusterData?.exercises ?? []).map(e => e.id));
+    return entries
+      .map(entry => {
+        const passedIds = (entry.exerciseIds ?? []).filter(id => clusterIds.has(id));
+        return { ...entry, passed: passedIds.length, total: clusterIds.size, exerciseIds: passedIds };
+      })
+      .filter(entry => entry.passed > 0)
+      .sort((a, b) => b.passed - a.passed || new Date(a.verified_at) - new Date(b.verified_at));
+  }
+
+  return entries;
+}
+
+function renderLeaderboardRows(container, entries, filterSelect) {
+  Array.from(container.querySelectorAll('.leaderboard-row')).forEach(el => el.remove());
+
+  const filtered = filterEntries(entries, filterSelect?.value ?? '');
+
+  if (filtered.length === 0) {
     const empty = document.createElement('p');
     empty.className = 'leaderboard-empty';
     empty.textContent = t('leaderboard.empty');
-    container.appendChild(empty);
+    container.insertBefore(empty, container.querySelector('.leaderboard-refresh'));
     return;
   }
 
-  cached.forEach((entry, idx) => {
+  filtered.forEach((entry, idx) => {
     const row = document.createElement('div');
     row.className = 'leaderboard-row';
 
@@ -1288,6 +1355,15 @@ function renderLeaderboard() {
     userLink.rel = 'noopener noreferrer';
     userLink.textContent = entry.user;
 
+    const badge = streakBadge(entry.streak ?? 0);
+    if (badge) {
+      const badgeEl = document.createElement('span');
+      badgeEl.className = 'streak-badge';
+      badgeEl.textContent = badge.emoji;
+      badgeEl.title = t(badge.key);
+      userLink.appendChild(badgeEl);
+    }
+
     const score = document.createElement('span');
     score.className = 'leaderboard-score';
     score.textContent = `${entry.passed}/${entry.total}`;
@@ -1295,8 +1371,45 @@ function renderLeaderboard() {
     row.appendChild(rank);
     row.appendChild(userLink);
     row.appendChild(score);
-    container.appendChild(row);
+
+    const refreshBtn = container.querySelector('.leaderboard-refresh');
+    container.insertBefore(row, refreshBtn ?? null);
   });
+}
+
+function renderLeaderboard() {
+  const container = elements.leaderboardContent;
+  container.innerHTML = '';
+
+  const cached = get(LEADERBOARD_KEY);
+  if (!cached || cached.length === 0) {
+    const empty = document.createElement('p');
+    empty.className = 'leaderboard-empty';
+    empty.textContent = t('leaderboard.empty');
+    container.appendChild(empty);
+
+    const refreshBtn = document.createElement('button');
+    refreshBtn.className = 'btn btn-ghost leaderboard-refresh';
+    refreshBtn.type = 'button';
+    refreshBtn.textContent = t('leaderboard.refresh');
+    refreshBtn.addEventListener('click', () => {
+      refreshBtn.disabled = true;
+      refreshBtn.textContent = t('leaderboard.refreshing');
+      fetchLeaderboard()
+        .then(entries => {
+          if (entries) set(LEADERBOARD_KEY, entries);
+          renderLeaderboard();
+        })
+        .catch(() => renderLeaderboard());
+    });
+    container.appendChild(refreshBtn);
+    return;
+  }
+
+  const filterSelect = buildLeaderboardFilter(cached, (value, entries) => {
+    renderLeaderboardRows(container, entries, filterSelect);
+  });
+  container.appendChild(filterSelect);
 
   const refreshBtn = document.createElement('button');
   refreshBtn.className = 'btn btn-ghost leaderboard-refresh';
@@ -1313,6 +1426,8 @@ function renderLeaderboard() {
       .catch(() => renderLeaderboard());
   });
   container.appendChild(refreshBtn);
+
+  renderLeaderboardRows(container, cached, filterSelect);
 }
 
 function handleReset() {
