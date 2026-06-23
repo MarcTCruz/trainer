@@ -141,5 +141,8 @@
   "ribbon.trackDayStructure": "{structure}",
   "ribbon.revisit": "↻",
   "pwa.updateAvailable": "Update available — click to refresh",
-  "pwa.offlineReady": "Ready for offline use"
+  "pwa.offlineReady": "Ready for offline use",
+  "difficulty.easy": "Easy",
+  "difficulty.medium": "Medium",
+  "difficulty.hard": "Hard"
 }

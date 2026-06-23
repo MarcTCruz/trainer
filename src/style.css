@@ -509,6 +509,27 @@ body {
   color: var(--text-muted);
 }
 
+.difficulty-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  margin-left: 4px;
+  flex-shrink: 0;
+}
+
+.difficulty-dot.easy {
+  background-color: var(--color-pass, #4ade80);
+}
+
+.difficulty-dot.medium {
+  background-color: var(--color-warn, #facc15);
+}
+
+.difficulty-dot.hard {
+  background-color: var(--color-fail, #f87171);
+}
+
 .track-day-revisit {
   font-size: 0.6rem;
   color: var(--warning);

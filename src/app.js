@@ -14,7 +14,7 @@ import { ensureFork, pushSolutionToFork, fetchCIResults, deleteFork } from './ci
 import { registerSW } from 'virtual:pwa-register';
 import { initI18n, t, getLocale, setLocale, SUPPORTED_LOCALES } from './i18n.js';
 import { runExercise, ensureQuickJS } from './runner.js';
-import { markSolved, getProgress, getSavedCode, saveDraft, normalizeCode, addBonusXp } from './progress.js';
+import { markSolved, getProgress, getSavedCode, saveDraft, normalizeCode, addBonusXp, recordAttempt, getDifficultyTier, recordSolveInAttempts } from './progress.js';
 import { analyzeSolution } from './linter.js'
 import { initDebugUI, startDebugSession } from './debugger/debugUI.js';
 import { getCustomTests, addCustomTest, removeCustomTest } from './custom-tests.js';
@@ -275,7 +275,7 @@ function renderStepper() {
   });
 }
 
-function renderRibbon() {
+async function renderRibbon() {
   const container = elements.ribbon;
   if (!container || !currentExercise) return;
 
@@ -284,9 +284,16 @@ function renderRibbon() {
   const progress = getProgress();
   const solved = progress.completedExercises;
 
+  const clusterRepIds = clusters.map((cluster) => {
+    const firstUnsolved = cluster.exercises.find((e) => !solved[e.id]);
+    return (firstUnsolved ?? cluster.exercises[0])?.id ?? null;
+  });
+
+  const tiers = await Promise.all(clusterRepIds.map((id) => (id ? getDifficultyTier(id) : Promise.resolve(null))));
+
   container.innerHTML = '';
 
-  clusters.forEach((cluster) => {
+  clusters.forEach((cluster, i) => {
     const isActive = cluster.id === activeCluster?.id;
     const total = cluster.exercises.length;
     const solvedCount = cluster.exercises.filter((e) => Boolean(solved[e.id])).length;
@@ -305,6 +312,15 @@ function renderRibbon() {
 
     pill.appendChild(bar);
 
+    const tier = tiers[i];
+    if (tier) {
+      const dot = document.createElement('span');
+      dot.className = `difficulty-dot ${tier}`;
+      dot.title = t(`difficulty.${tier}`);
+      dot.setAttribute('aria-hidden', 'true');
+      pill.appendChild(dot);
+    }
+
     pill.addEventListener('click', () => {
       if (isActive) return;
       const firstUnsolved = cluster.exercises.find((e) => !solved[e.id]);
@@ -316,7 +332,7 @@ function renderRibbon() {
   });
 }
 
-function renderTrackRibbon() {
+async function renderTrackRibbon() {
   const container = elements.ribbon;
   if (!container) return;
 
@@ -325,6 +341,8 @@ function renderTrackRibbon() {
 
   const progress = getProgress();
   const solved = progress.completedExercises;
+
+  const tiers = await Promise.all(trackDays.map((d) => getDifficultyTier(d.exerciseId)));
 
   container.innerHTML = '';
 
@@ -360,6 +378,15 @@ function renderTrackRibbon() {
       pill.appendChild(revisitLabel);
     }
 
+    const tier = tiers[idx];
+    if (tier) {
+      const dot = document.createElement('span');
+      dot.className = `difficulty-dot ${tier}`;
+      dot.title = t(`difficulty.${tier}`);
+      dot.setAttribute('aria-hidden', 'true');
+      pill.appendChild(dot);
+    }
+
     if (!isLocked) {
       pill.addEventListener('click', () => {
         loadExercise(dayEntry.exerciseId, false);
@@ -377,6 +404,15 @@ function updateRibbon() {
     renderRibbon();
   }
 }
+
+const HINT_BASE_DELAY_MS = 0;
+
+const DIFFICULTY_HINT_MULTIPLIER = {
+  easy: 1.5,
+  medium: 1,
+  hard: 0.5,
+};
+
 
 function syncViewToggle() {
   if (!elements.viewClusters || !elements.viewTrack) return;
@@ -563,6 +599,7 @@ async function handleRun() {
     elements.wasmStatus.textContent = t('run.executing');
 
     const userCode = getCode(editor);
+    await recordAttempt(currentExercise.id);
     const customTests = getCustomTests(currentExercise.id);
     const mergedExercise = customTests.length > 0
       ? { ...currentExercise, testCases: [...currentExercise.testCases, ...customTests] }
@@ -581,6 +618,7 @@ async function handleRun() {
       elements.statusBar.className = 'status-message error';
     } else if (defaultResults.every(r => r.passed)) {
       markSolved(currentExercise.id, userCode);
+      recordSolveInAttempts(currentExercise.id);
       lastLintReport = analyzeSolution(userCode);
       addBonusXp(currentExercise.id, lastLintReport.score);
       renderLintResults(lastLintReport);
@@ -1289,10 +1327,18 @@ function handleReset() {
   elements.hintButton.textContent = t('hint.button', { current: 1, total: currentExercise.hints?.length ?? 0 });
 }
 
-function handleHint() {
+async function handleHint() {
   if (!currentExercise?.hints?.length) return;
 
   if (currentHintIndex < currentExercise.hints.length) {
+    const tier = await getDifficultyTier(currentExercise.id);
+    const multiplier = DIFFICULTY_HINT_MULTIPLIER[tier] ?? 1;
+    const delay = HINT_BASE_DELAY_MS * multiplier;
+
+    if (delay > 0) {
+      await new Promise((resolve) => setTimeout(resolve, delay));
+    }
+
     elements.hintContent.textContent = currentExercise.hints[currentHintIndex];
     elements.hintContent.classList.add('visible');
     currentHintIndex++;

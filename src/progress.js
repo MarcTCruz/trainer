@@ -1,6 +1,7 @@
 import { get, set } from './storage.js';
 
 const STORAGE_KEY = 'trainer_v1';
+const ATTEMPTS_KEY = 'trainer_attempts';
 
 function loadState() {
   const data = get(STORAGE_KEY);
@@ -116,6 +117,39 @@ export function saveDraft(exerciseId, code) {
 export function getDraft(exerciseId) {
   const drafts = get(DRAFTS_KEY) ?? {};
   return drafts[exerciseId] ?? null;
+}
+
+export async function recordAttempt(exerciseId) {
+  const attempts = get(ATTEMPTS_KEY) ?? {};
+  const entry = attempts[exerciseId] ?? { attempts: 0, solves: 0 };
+  entry.attempts += 1;
+  attempts[exerciseId] = entry;
+  set(ATTEMPTS_KEY, attempts);
+}
+
+export async function getAttemptStats(exerciseId) {
+  const attempts = get(ATTEMPTS_KEY) ?? {};
+  return attempts[exerciseId] ?? { attempts: 0, solves: 0 };
+}
+
+export async function getDifficultyTier(exerciseId) {
+  const stats = await getAttemptStats(exerciseId);
+  if (stats.attempts < 3) return null;
+
+  const solveRate = stats.attempts > 0 ? stats.solves / stats.attempts : 0;
+  const avgAttempts = stats.attempts;
+
+  if (solveRate > 0.7 || avgAttempts < 2) return 'easy';
+  if (solveRate < 0.3 || avgAttempts > 5) return 'hard';
+  return 'medium';
+}
+
+export function recordSolveInAttempts(exerciseId) {
+  const attempts = get(ATTEMPTS_KEY) ?? {};
+  const entry = attempts[exerciseId] ?? { attempts: 0, solves: 0 };
+  entry.solves += 1;
+  attempts[exerciseId] = entry;
+  set(ATTEMPTS_KEY, attempts);
 }
 
 export function addBonusXp(exerciseId, newBonus) {
