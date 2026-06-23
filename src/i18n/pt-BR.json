@@ -121,6 +121,7 @@
   "debug.continueBack": "Voltar Continuando",
   "debug.reset": "Reiniciar",
   "debug.testPicker": "Caso de teste para depurar",
+  "debug.testPickerLabel": "Caso de teste:",
   "debug.position": "Passo {current} / {total}",
   "debug.variables": "Variáveis",
   "debug.callStack": "Pilha de Chamadas",

@@ -1746,7 +1746,6 @@ test('i18n: locale switch translates all UI chrome including debug and custom te
     { sel: '#format-button', key: 'run.format' },
     { sel: '#debug-button', key: 'debug.button' },
     { sel: '#browse-button', key: 'nav.browse' },
-    { sel: '#dbg-stop', key: 'debug.stop' },
     { sel: '#custom-tests-toggle', key: 'customTest.add' },
     { sel: '#custom-test-add', key: 'customTest.addButton' },
   ];
@@ -1758,6 +1757,7 @@ test('i18n: locale switch translates all UI chrome including debug and custom te
     { sel: '#custom-tests-section .debug-section-title', key: 'customTest.title' },
     { sel: '.sidebar-header h2', key: 'nav.exercises' },
     { sel: '.leaderboard-header h2', key: 'leaderboard.title' },
+    { sel: '#dbg-picker-label', key: 'debug.testPickerLabel' },
   ];
 
   const ARIA_LABELS = [
@@ -1769,6 +1769,7 @@ test('i18n: locale switch translates all UI chrome including debug and custom te
     { sel: '#dbg-continue-back', key: 'debug.continueBack' },
     { sel: '#dbg-reset', key: 'debug.reset' },
     { sel: '#dbg-test-picker', key: 'debug.testPicker' },
+    { sel: '#dbg-stop', key: 'debug.stop' },
   ];
 
   const PLACEHOLDERS = [

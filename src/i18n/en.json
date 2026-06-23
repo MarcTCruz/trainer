@@ -121,6 +121,7 @@
   "debug.continueBack": "Continue Back",
   "debug.reset": "Reset",
   "debug.testPicker": "Test case to debug",
+  "debug.testPickerLabel": "Test case:",
   "debug.position": "Step {current} / {total}",
   "debug.variables": "Variables",
   "debug.callStack": "Call Stack",

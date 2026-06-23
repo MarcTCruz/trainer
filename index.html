@@ -158,8 +158,6 @@
         </div>
 
         <div class="editor-panel">
-          <div id="editor-container"></div>
-
           <div class="controls">
             <button class="btn btn-primary" id="run-button">Run Code</button>
             <button class="btn btn-debug" id="debug-button">Debug</button>
@@ -174,21 +172,26 @@
           </div>
 
           <div class="debug-toolbar" id="debug-toolbar" hidden>
-            <button class="dbg-btn" id="dbg-step-back" title="Step Back" aria-label="Step Back">⏪</button>
-            <button class="dbg-btn" id="dbg-step-into" title="Step Into (F11)" aria-label="Step Into">↓</button>
-            <button class="dbg-btn" id="dbg-step-over" title="Step Over (F10)" aria-label="Step Over">→</button>
-            <button class="dbg-btn" id="dbg-step-out" title="Step Out (Shift+F11)" aria-label="Step Out">↑</button>
-            <button class="dbg-btn" id="dbg-continue" title="Continue (F5)" aria-label="Continue">▶</button>
-            <button class="dbg-btn" id="dbg-continue-back" title="Continue Back" aria-label="Continue Back">◀</button>
-            <button class="dbg-btn" id="dbg-reset" title="Reset" aria-label="Reset">⏮</button>
-            <select class="dbg-test-picker" id="dbg-test-picker" title="Test case to debug" aria-label="Test case to debug"></select>
-            <span class="dbg-position" id="dbg-position">Step 0 / 0</span>
-            <button class="btn btn-secondary dbg-stop" id="dbg-stop">Stop Debug</button>
+            <div class="dbg-row dbg-picker-row">
+              <label class="dbg-picker-label" id="dbg-picker-label" for="dbg-test-picker">Test case:</label>
+              <select class="dbg-test-picker" id="dbg-test-picker" title="Test case to debug" aria-label="Test case to debug"></select>
+            </div>
+            <div class="dbg-row dbg-controls-row">
+              <button class="dbg-btn" id="dbg-step-back" title="Step Back" aria-label="Step Back">⏪</button>
+              <button class="dbg-btn" id="dbg-step-into" title="Step Into (F11)" aria-label="Step Into">↓</button>
+              <button class="dbg-btn" id="dbg-step-over" title="Step Over (F10)" aria-label="Step Over">→</button>
+              <button class="dbg-btn" id="dbg-step-out" title="Step Out (Shift+F11)" aria-label="Step Out">↑</button>
+              <button class="dbg-btn" id="dbg-continue" title="Continue (F5)" aria-label="Continue">▶</button>
+              <button class="dbg-btn" id="dbg-continue-back" title="Continue Back" aria-label="Continue Back">◀</button>
+              <button class="dbg-btn" id="dbg-reset" title="Reset" aria-label="Reset">⏮</button>
+              <button class="dbg-btn dbg-stop" id="dbg-stop" title="Stop Debug" aria-label="Stop Debug">⏹</button>
+            </div>
+            <div class="dbg-row dbg-position-row">
+              <span class="dbg-position" id="dbg-position">Step 0 / 0</span>
+            </div>
           </div>
 
-          <div class="wasm-status" id="wasm-status"></div>
-
-          <div id="status-message" class="status-message"></div>
+          <div id="editor-container"></div>
 
           <div class="debug-panel" id="debug-panel" hidden>
             <div class="debug-vars" id="debug-vars">
@@ -204,6 +207,10 @@
               <canvas id="debug-canvas"></canvas>
             </div>
           </div>
+
+          <div class="wasm-status" id="wasm-status"></div>
+
+          <div id="status-message" class="status-message"></div>
 
           <div class="results-section" id="results-container"></div>
 

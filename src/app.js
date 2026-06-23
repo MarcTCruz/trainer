@@ -1603,7 +1603,9 @@ function applyI18nToDOM() {
   elements.leaderboardClose.setAttribute('aria-label', t('leaderboard.close'));
 
   elements.debugButton.textContent = t('debug.button');
-  elements.dbgStop.textContent = t('debug.stop');
+  elements.dbgStop.title = t('debug.stop');
+  elements.dbgStop.setAttribute('aria-label', t('debug.stop'));
+  document.getElementById('dbg-picker-label').textContent = t('debug.testPickerLabel');
   elements.dbgStepBack.title = t('debug.stepBack');
   elements.dbgStepBack.setAttribute('aria-label', t('debug.stepBack'));
   elements.dbgStepInto.title = `${t('debug.stepInto')} (F11)`;

@@ -1025,17 +1025,18 @@ body {
 /* Responsive — tablet */
 @media (max-width: 1100px) {
   .editor-panel.debugging {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
+    grid-template-columns: 1fr;
+    grid-template-rows: auto auto 1fr auto auto auto;
+  }
+
+  .editor-panel.debugging .debug-panel {
+    grid-column: 1;
+    grid-row: 4;
+    max-height: 40vh;
   }
 
   .editor-panel.debugging #editor-container .cm-editor {
     max-height: 50vh;
-  }
-
-  .editor-panel.debugging .debug-panel {
-    max-height: 40vh;
   }
 }
 
@@ -1449,14 +1450,24 @@ body {
 
 /* Debug toolbar */
 .debug-toolbar {
-  display: flex;
-  gap: 6px;
-  align-items: center;
-  padding: 8px 12px;
+  gap: 8px;
+  padding: 10px 12px;
   background: var(--bg-card);
   border: 1px solid var(--border);
   border-radius: 6px;
-  flex-wrap: wrap;
+}
+.dbg-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.dbg-picker-label {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+.dbg-controls-row {
+  flex-wrap: nowrap;
 }
 .dbg-btn {
   min-width: 44px;
@@ -1485,17 +1496,23 @@ body {
 .dbg-position {
   font-size: 0.8rem;
   color: var(--text-muted);
-  margin-left: auto;
   font-family: var(--font-mono);
 }
 .dbg-stop {
-  margin-left: 8px;
+  margin-left: auto;
+  border-left: 1px solid var(--border);
+  padding-left: 12px;
+  color: var(--error);
+  border-color: color-mix(in oklch, var(--error) 40%, var(--border));
+}
+.dbg-stop:hover:not(:disabled) {
+  background: color-mix(in oklch, var(--error) 15%, var(--bg-secondary));
+  border-color: var(--error);
+  color: var(--error);
 }
 
 /* Debug panel */
 .debug-panel {
-  display: flex;
-  flex-direction: column;
   gap: 10px;
   overflow-y: auto;
 }
@@ -1508,11 +1525,11 @@ body {
   max-height: 200px;
 }
 
-/* Side-by-side layout: code left, debug panels right */
+/* Debugging layout: controls fixed at top, debug toolbar below, editor+panels side by side */
 .editor-panel.debugging {
   display: grid;
   grid-template-columns: 1fr 340px;
-  grid-template-rows: auto auto auto 1fr auto;
+  grid-template-rows: auto auto 1fr auto auto;
   gap: 10px;
 }
 .editor-panel.debugging .controls {
@@ -1520,16 +1537,14 @@ body {
   grid-row: 1;
 }
 .editor-panel.debugging .debug-toolbar {
+  display: flex;
+  flex-direction: column;
   grid-column: 1 / -1;
   grid-row: 2;
 }
-.editor-panel.debugging .wasm-status {
-  grid-column: 1 / -1;
-  grid-row: 3;
-}
 .editor-panel.debugging #editor-container {
   grid-column: 1;
-  grid-row: 4;
+  grid-row: 3;
   min-height: 0;
   height: 100%;
 }
@@ -1538,10 +1553,16 @@ body {
   max-height: 70vh;
 }
 .editor-panel.debugging .debug-panel {
+  display: flex;
+  flex-direction: column;
   grid-column: 2;
-  grid-row: 4;
+  grid-row: 3;
   max-height: 70vh;
   overflow-y: auto;
+}
+.editor-panel.debugging .wasm-status {
+  grid-column: 1 / -1;
+  grid-row: 4;
 }
 .editor-panel.debugging .status-message {
   grid-column: 1 / -1;
