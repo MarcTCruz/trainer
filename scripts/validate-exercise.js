@@ -4,6 +4,8 @@ import { basename } from 'path';
 
 const REQUIRED_FIELDS = ['id', 'title', 'difficulty', 'description', 'functionName', 'params', 'starterCode', 'testCases'];
 const VALID_DIFFICULTIES = ['Easy', 'Medium', 'Hard'];
+const VALID_LANGUAGES = ['javascript', 'apex'];
+const VALID_ENGINES = ['standard-io', 'geometry'];
 const ID_PATTERN = /^[a-z0-9]+(-[a-z0-9]+)*$/;
 
 function validateExercise(filePath) {
@@ -91,6 +93,18 @@ function validateExercise(filePath) {
         errors.push(`testCases[${i}] is missing "expected"`);
       }
     });
+  }
+
+  if (exercise.language !== undefined) {
+    if (!VALID_LANGUAGES.includes(exercise.language)) {
+      errors.push(`"language" must be one of ${VALID_LANGUAGES.join(', ')} (got "${exercise.language}")`);
+    }
+  }
+
+  if (exercise.engine !== undefined) {
+    if (!VALID_ENGINES.includes(exercise.engine)) {
+      errors.push(`"engine" must be one of ${VALID_ENGINES.join(', ')} (got "${exercise.engine}")`);
+    }
   }
 
   return errors;

@@ -16,5 +16,7 @@
   "hints": [
     "Think about the data structure",
     "Consider edge cases"
-  ]
+  ],
+  "language": "javascript",
+  "engine": "standard-io"
 }

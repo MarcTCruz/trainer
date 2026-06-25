@@ -38,6 +38,8 @@ Each exercise lives in `src/exercises/<id>.json`. All fields below are required 
 | `starterCode` | string | The function shell shown to the user. Must declare `functionName`. |
 | `testCases` | object[] | Test suite. See [Test cases](#test-cases) below. Must be non-empty. |
 | `hints` | string[] | Progressive hints displayed on demand. |
+| `language` | string (optional) | Execution language. Default: `"javascript"`. Allowed: `"javascript"`, `"apex"`. |
+| `engine` | string (optional) | Evaluation engine. Default: `"standard-io"`. Allowed: `"standard-io"`, `"geometry"`. |
 
 ### Variant fields (optional)
 

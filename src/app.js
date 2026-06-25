@@ -21,7 +21,7 @@ import { ensureRepo, pushSolution, pushProgress, syncOnLogin, setRepoVisibility,
 import { ensureFork, pushSolutionToFork, fetchCIResults, deleteFork } from './ci-sync.js';
 import { registerSW } from 'virtual:pwa-register';
 import { initI18n, t, getLocale, setLocale, SUPPORTED_LOCALES } from './i18n.js';
-import { runExercise, ensureQuickJS } from './runner.js';
+import { evaluateExercise, ensureQuickJS } from './runner.js';
 import { markSolved, getProgress, getSavedCode, saveDraft, normalizeCode, addBonusXp, recordAttempt, getDifficultyTier, recordSolveInAttempts } from './progress.js';
 import { analyzeSolution } from './linter.js'
 import { initDebugUI, startDebugSession } from './debugger/debugUI.js';
@@ -623,7 +623,7 @@ async function handleRun() {
       ? { ...currentExercise, testCases: [...currentExercise.testCases, ...customTests] }
       : currentExercise;
     const defaultCount = currentExercise.testCases.length;
-    const result = await runExercise(userCode, mergedExercise);
+    const result = await evaluateExercise(mergedExercise, userCode);
 
     result.results.forEach((r, i) => { r.isCustom = i >= defaultCount; });
 
@@ -677,7 +677,7 @@ async function handleRun() {
           if (nextVariant.functionName !== currentExercise.functionName) {
             forwardCode += `\nvar ${nextVariant.functionName} = ${currentExercise.functionName};`;
           }
-          forwardResult = await runExercise(forwardCode, nextVariant);
+          forwardResult = await evaluateExercise(nextVariant, forwardCode);
         } catch {
           // Silent — forward-testing is purely informational
         }
