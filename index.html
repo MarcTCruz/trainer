@@ -123,6 +123,57 @@
         </div>
       </div>
 
+      <div class="sf-modal-backdrop" id="sf-modal-backdrop"></div>
+      <div
+        class="auth-modal sf-modal"
+        id="sf-modal"
+        role="dialog"
+        aria-label="Connect Salesforce Org"
+        aria-modal="true"
+      >
+        <div class="auth-modal-content">
+          <div class="auth-modal-header">
+            <h2>Connect Salesforce Org</h2>
+            <button
+              class="btn btn-ghost auth-modal-close"
+              id="sf-modal-close"
+              type="button"
+              aria-label="Close"
+            >
+              &times;
+            </button>
+          </div>
+          <p class="sf-modal-text">
+            Paste your Salesforce instance URL and access token to connect your org.
+          </p>
+          <div class="auth-input-group">
+            <label for="sf-instance-input" class="auth-label sf-instance-label">Instance URL</label>
+            <input
+              type="text"
+              id="sf-instance-input"
+              class="auth-input"
+              placeholder="https://yourorg.salesforce.com"
+              autocomplete="off"
+            />
+          </div>
+          <div class="auth-input-group">
+            <label for="sf-token-input" class="auth-label sf-token-label">Access Token</label>
+            <input
+              type="password"
+              id="sf-token-input"
+              class="auth-input"
+              placeholder="00D..."
+              autocomplete="off"
+            />
+          </div>
+          <div class="auth-error" id="sf-auth-error"></div>
+          <div class="auth-modal-actions">
+            <button class="btn btn-primary" id="sf-connect-button" type="button">Connect Salesforce Org</button>
+            <button class="btn btn-secondary" id="sf-cancel-button" type="button">Cancel</button>
+          </div>
+        </div>
+      </div>
+
       <div class="main">
         <div class="exercise-panel">
           <div class="ribbon-controls">

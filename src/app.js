@@ -9,6 +9,14 @@ import {
   isAuthenticated,
   GITHUB_TOKEN_URL
 } from './github-auth.js';
+import {
+  saveSalesforceAuth,
+  getSalesforceAuth,
+  clearSalesforceAuth,
+  getSavedSalesforceOrg,
+  validateAndFetchOrg,
+  isSalesforceConnected,
+} from './salesforce-auth.js';
 import { ensureRepo, pushSolution, pushProgress, syncOnLogin, setRepoVisibility, pushReadme } from './github-sync.js';
 import { ensureFork, pushSolutionToFork, fetchCIResults, deleteFork } from './ci-sync.js';
 import { registerSW } from 'virtual:pwa-register';
@@ -99,6 +107,14 @@ const elements = {
   autoFormatCheckbox: document.getElementById('auto-format-checkbox'),
   viewClusters: document.getElementById('view-clusters'),
   viewTrack: document.getElementById('view-track'),
+  sfModal: document.getElementById('sf-modal'),
+  sfModalBackdrop: document.getElementById('sf-modal-backdrop'),
+  sfModalClose: document.getElementById('sf-modal-close'),
+  sfInstanceInput: document.getElementById('sf-instance-input'),
+  sfTokenInput: document.getElementById('sf-token-input'),
+  sfAuthError: document.getElementById('sf-auth-error'),
+  sfConnectButton: document.getElementById('sf-connect-button'),
+  sfCancelButton: document.getElementById('sf-cancel-button'),
 };
 
 const LINT_RULE_META = Object.fromEntries(LINT_RULES.map(r => [r.id, { titleKey: r.titleKey, hintKey: r.hintKey, bonusXp: r.bonusXp }]));
@@ -832,6 +848,51 @@ function closeAuthModal() {
   elements.authModalBackdrop.classList.remove('open');
 }
 
+function openSalesforceModal() {
+  elements.sfModal.classList.add('open');
+  elements.sfModalBackdrop.classList.add('open');
+  elements.sfInstanceInput.value = '';
+  elements.sfTokenInput.value = '';
+  elements.sfAuthError.textContent = '';
+  elements.sfInstanceInput.focus();
+}
+
+function closeSalesforceModal() {
+  elements.sfModal.classList.remove('open');
+  elements.sfModalBackdrop.classList.remove('open');
+}
+
+async function handleSalesforceConnect() {
+  const instanceUrl = elements.sfInstanceInput.value.trim();
+  const accessToken = elements.sfTokenInput.value.trim();
+
+  if (!instanceUrl || !accessToken) {
+    elements.sfAuthError.textContent = t('sf.emptyFields');
+    return;
+  }
+
+  elements.sfConnectButton.disabled = true;
+  elements.sfConnectButton.textContent = t('sf.connecting');
+  elements.sfAuthError.textContent = '';
+
+  try {
+    await validateAndFetchOrg(instanceUrl, accessToken);
+    saveSalesforceAuth({ instanceUrl, accessToken });
+    closeSalesforceModal();
+    renderAuthState();
+  } catch {
+    elements.sfAuthError.textContent = t('sf.invalidToken');
+  } finally {
+    elements.sfConnectButton.disabled = false;
+    elements.sfConnectButton.textContent = t('sf.connect');
+  }
+}
+
+function handleSalesforceDisconnect() {
+  clearSalesforceAuth();
+  renderAuthState();
+}
+
 function makeButton(id, className, labelKey) {
   const btn = document.createElement('button');
   btn.className = className;
@@ -1043,6 +1104,48 @@ function renderAuthState() {
   renderYourDataButton(actions);
 
   section.appendChild(actions);
+
+  renderSalesforceSection(section);
+}
+
+function renderSalesforceSection(section) {
+  if (isSalesforceConnected()) {
+    const org = getSavedSalesforceOrg();
+    const sfRow = document.createElement('div');
+    sfRow.className = 'auth-actions';
+
+    if (org) {
+      const orgInfo = document.createElement('div');
+      orgInfo.className = 'sf-org-info';
+
+      const displayName = document.createElement('span');
+      displayName.className = 'sf-org-display-name';
+      displayName.textContent = `${t('sf.connectedAs')}: ${org.displayName}`;
+
+      const username = document.createElement('span');
+      username.className = 'sf-org-username';
+      username.textContent = org.username;
+
+      orgInfo.appendChild(displayName);
+      orgInfo.appendChild(username);
+      sfRow.appendChild(orgInfo);
+    }
+
+    const disconnectBtn = makeButton('sf-disconnect-button', 'btn btn-ghost btn-danger', 'sf.disconnect');
+    disconnectBtn.addEventListener('click', handleSalesforceDisconnect);
+    sfRow.appendChild(disconnectBtn);
+
+    section.appendChild(sfRow);
+    return;
+  }
+
+  const connectBtn = makeButton('sf-connect-entry-button', 'btn btn-ghost', 'sf.connect');
+  connectBtn.addEventListener('click', openSalesforceModal);
+
+  const sfRow = document.createElement('div');
+  sfRow.className = 'auth-actions';
+  sfRow.appendChild(connectBtn);
+  section.appendChild(sfRow);
 }
 
 async function handleConnect() {
@@ -1523,6 +1626,10 @@ elements.authModalClose.addEventListener('click', closeAuthModal);
 elements.authModalBackdrop.addEventListener('click', closeAuthModal);
 elements.authConnectButton.addEventListener('click', handleConnect);
 elements.authCancelButton.addEventListener('click', closeAuthModal);
+elements.sfModalClose.addEventListener('click', closeSalesforceModal);
+elements.sfModalBackdrop.addEventListener('click', closeSalesforceModal);
+elements.sfConnectButton.addEventListener('click', handleSalesforceConnect);
+elements.sfCancelButton.addEventListener('click', closeSalesforceModal);
 
 if (elements.viewClusters) {
   elements.viewClusters.addEventListener('click', () => {
@@ -1614,6 +1721,7 @@ document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape') {
     closeSidebar();
     closeAuthModal();
+    closeSalesforceModal();
     closeLeaderboard();
   }
 });
@@ -1638,14 +1746,23 @@ function applyI18nToDOM() {
   document.querySelector('.sidebar-header h2').textContent = t('nav.exercises');
   elements.sidebarClose.setAttribute('aria-label', t('nav.closeSidebar'));
   document.getElementById('sidebar').setAttribute('aria-label', t('nav.exerciseBrowser'));
-  document.querySelector('.auth-modal-header h2').textContent = t('auth.signInTitle');
+  document.querySelector('#auth-modal .auth-modal-header h2').textContent = t('auth.signInTitle');
   elements.authModalClose.setAttribute('aria-label', t('auth.close'));
-  document.querySelector('.auth-modal-text').textContent = t('auth.tokenPrompt');
+  document.querySelector('#auth-modal .auth-modal-text').textContent = t('auth.tokenPrompt');
   document.querySelector('.auth-github-link').textContent = t('auth.createToken');
-  document.querySelector('.auth-label').textContent = t('auth.pasteToken');
+  document.querySelector('#auth-modal .auth-label').textContent = t('auth.pasteToken');
   elements.tokenInput.placeholder = t('auth.tokenPlaceholder');
   elements.authConnectButton.textContent = t('auth.connect');
   elements.authCancelButton.textContent = t('auth.cancel');
+  document.querySelector('#sf-modal .auth-modal-header h2').textContent = t('sf.connectTitle');
+  elements.sfModalClose.setAttribute('aria-label', t('auth.close'));
+  document.querySelector('#sf-modal .sf-modal-text').textContent = t('sf.prompt');
+  document.querySelector('#sf-modal .sf-instance-label').textContent = t('sf.instanceLabel');
+  document.querySelector('#sf-modal .sf-token-label').textContent = t('sf.tokenLabel');
+  elements.sfInstanceInput.placeholder = t('sf.instancePlaceholder');
+  elements.sfTokenInput.placeholder = t('sf.tokenPlaceholder');
+  elements.sfConnectButton.textContent = t('sf.connect');
+  elements.sfCancelButton.textContent = t('auth.cancel');
   document.querySelector('#footer-quote').textContent = `“${t('app.quote')}”`;
   document.querySelector('.footer p:last-child').textContent = t('app.footer');
 

@@ -151,5 +151,17 @@
   "pwa.offlineReady": "Pronto para uso offline",
   "difficulty.easy": "Fácil",
   "difficulty.medium": "Médio",
-  "difficulty.hard": "Difícil"
+  "difficulty.hard": "Difícil",
+  "sf.connect": "Conectar Org Salesforce",
+  "sf.connectTitle": "Conectar Org Salesforce",
+  "sf.prompt": "Cole a URL da instância e o token de acesso do Salesforce para conectar sua org.",
+  "sf.instanceLabel": "URL da Instância",
+  "sf.instancePlaceholder": "https://suaorg.salesforce.com",
+  "sf.tokenLabel": "Token de Acesso",
+  "sf.tokenPlaceholder": "00D...",
+  "sf.connecting": "Conectando...",
+  "sf.invalidToken": "Não foi possível conectar. Verifique a URL da instância e o token.",
+  "sf.emptyFields": "Preencha os dois campos.",
+  "sf.disconnect": "Desconectar Org",
+  "sf.connectedAs": "Conectado como"
 }

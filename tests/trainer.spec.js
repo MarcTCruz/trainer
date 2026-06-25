@@ -1618,6 +1618,7 @@ test('i18n: every text-setting line in source uses t() or is exempt', async () =
     /opt\.textContent/,
     /del\.textContent/,
     /violations\.textContent/,
+    /\.textContent\s*=\s*org\./,
   ];
 
   const files = ['src/app.js', 'src/runner.js', 'src/debugger/debugUI.js'];

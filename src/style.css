@@ -857,6 +857,47 @@ body {
   gap: 10px;
 }
 
+/* SF modal backdrop — separate z-index vars reuse auth layer values */
+.sf-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s ease;
+  z-index: var(--z-auth-backdrop);
+}
+
+.sf-modal-backdrop.open {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* SF modal text reuses auth-modal-text styling */
+.sf-modal-text {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  line-height: 1.6;
+}
+
+/* SF connected org display */
+.sf-org-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.sf-org-display-name {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.sf-org-username {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+}
+
 /* Footer */
 .footer {
   text-align: center;
