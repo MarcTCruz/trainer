@@ -59,6 +59,15 @@
         ]
       ],
       "expected": 2
+    },
+    {
+      "input": [
+        [
+          0,
+          0
+        ]
+      ],
+      "expected": 0
     }
   ],
   "hints": [

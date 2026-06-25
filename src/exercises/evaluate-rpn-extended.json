@@ -127,6 +127,14 @@
         ]
       ],
       "expected": -3
+    },
+    {
+      "input": [
+        [
+          "0"
+        ]
+      ],
+      "expected": 0
     }
   ],
   "hints": [

@@ -63,6 +63,40 @@
         1,
         true
       ]
+    },
+    {
+      "input": [
+        [
+          "empty"
+        ],
+        [
+          null
+        ]
+      ],
+      "expected": [
+        true
+      ]
+    },
+    {
+      "input": [
+        [
+          "push",
+          "pop",
+          "empty"
+        ],
+        [
+          [
+            0
+          ],
+          null,
+          null
+        ]
+      ],
+      "expected": [
+        null,
+        0,
+        true
+      ]
     }
   ],
   "hints": [

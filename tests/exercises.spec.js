@@ -125,7 +125,7 @@ test('Evaluate RPN correct solution passes all 10 test cases', async ({ page }) 
   await expect(passResults).toHaveCount(10);
 });
 
-test('Extended RPN variant loads after solving RPN and passes all tests', async ({ page }) => {
+test('Extended RPN variant loads after solving RPN and passes all 11 test cases', async ({ page }) => {
   await page.goto('/');
   await solveParenthesesFamily(page);
   await page.reload();
@@ -154,7 +154,7 @@ test('Extended RPN variant loads after solving RPN and passes all tests', async 
     timeout: 15000
   });
   const passResults = page.locator('.test-result.pass');
-  await expect(passResults).toHaveCount(10);
+  await expect(passResults).toHaveCount(11);
 });
 
 // ---------------------------------------------------------------------------
