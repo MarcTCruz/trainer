@@ -237,6 +237,47 @@ test('debugger: changing the test-case picker while debugging re-traces', async 
 });
 
 // ---------------------------------------------------------------------------
+// Regression (T-6hsmzksj): re-tracing must not accumulate keydown listeners /
+// engine subscriptions. Each startDebugSession tears down the prior ones.
+// Proof: after N re-traces, pressing the F10 (step-over) shortcut ONCE must
+// advance #dbg-position by EXACTLY ONE — with the leak, N listeners fire per
+// keypress and position jumps by N.
+// ---------------------------------------------------------------------------
+
+test('debugger: re-tracing does not accumulate keydown listeners (one keypress = one step)', async ({ page }) => {
+  await enterDebugMode(page);
+
+  const positionEl = page.locator('#dbg-position');
+  const picker = page.locator('#dbg-test-picker');
+  await expect(picker).toBeVisible();
+
+  const optionCount = await picker.locator('option').count();
+  expect(optionCount).toBeGreaterThan(2);
+
+  // Trigger several re-traces via the picker. Pre-leak-fix each adds another
+  // keydown listener + engine subscription that is never torn down.
+  for (const idx of [1, 2, 1, 0]) {
+    const value = await picker.locator('option').nth(idx).getAttribute('value');
+    await picker.selectOption(value);
+    await expect(positionEl).toContainText(/\d/, { timeout: 15000 });
+  }
+
+  // Read current step number, press F10 (step-over) exactly once.
+  const beforeText = await positionEl.textContent();
+  const before = Number((beforeText.match(/(\d+)\s*\/\s*\d+/) || [])[1]);
+  expect(Number.isFinite(before)).toBe(true);
+
+  await page.keyboard.press('F10');
+
+  // Position must advance by EXACTLY ONE, not N (N = number of accumulated
+  // listeners). With the leak this would jump by the listener count.
+  await expect(positionEl).not.toHaveText(beforeText, { timeout: 5000 });
+  const afterText = await positionEl.textContent();
+  const after = Number((afterText.match(/(\d+)\s*\/\s*\d+/) || [])[1]);
+  expect(after).toBe(before + 1);
+});
+
+// ---------------------------------------------------------------------------
 // 7. exit debug: stop button hides toolbar/panel and removes .debugging
 // ---------------------------------------------------------------------------
 

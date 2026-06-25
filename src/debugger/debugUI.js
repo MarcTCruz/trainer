@@ -72,6 +72,9 @@ export async function startDebugSession(code, exercise, editor, testIndex = 0) {
   els.resultsContainer.style.display = 'none'
   els.debugToolbar.closest('.editor-panel')?.classList.add('debugging')
 
+  if (unsubscribe) { unsubscribe(); unsubscribe = null; }
+  if (keyHandler) { document.removeEventListener('keydown', keyHandler); keyHandler = null; }
+
   unsubscribe = engine.subscribe((state) => renderState(state, editor))
 
   keyHandler = (e) => handleKey(e, editor)
