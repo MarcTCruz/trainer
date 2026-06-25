@@ -115,6 +115,16 @@ export function isDebugging() {
   return isActive
 }
 
+function renderEntry(editor, entry) {
+  if (!entry) {
+    clearEditorHighlight(editor)
+    renderVars({})
+    return
+  }
+  setDebugLine(editor, entry.line)
+  renderVars(entry.vars)
+}
+
 function renderState(state, editor) {
   const { index, entry, atStart, atEnd, traceLength, callStack } = state
 
@@ -129,14 +139,7 @@ function renderState(state, editor) {
 
   renderDataViz(entry?.vars ?? {}, prevVars)
 
-  if (entry) {
-    setDebugLine(editor, entry.line)
-    renderVars(entry.vars)
-  } else {
-    clearEditorHighlight(editor)
-    renderVars({})
-  }
-
+  renderEntry(editor, entry)
   renderCallStack(callStack)
 }
 
