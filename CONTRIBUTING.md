@@ -95,29 +95,21 @@ Valid `id` examples: `two-sum`, `valid-parentheses`, `min-stack`, `lru-cache2`.
    ```
    Fill in all required fields.
 
-3. **Register it in `src/exercise-loader.js`**:
-   - Add an import at the top with the other imports:
-     ```js
-     import yourExercise from './exercises/your-exercise-id.json';
-     ```
-   - Add an entry to the `exercises` Map:
-     ```js
-     [yourExercise.id, yourExercise],
-     ```
+   The exercise auto-registers: every `*.json` in `src/exercises/` is loaded automatically at build time (via `import.meta.glob`). No code change is needed to wire it in.
 
-4. **Optionally add it to a cluster or track** in `src/exercises/registry.json`. Place it in the relevant cluster's `exercises` array, or add it as a new cluster if no existing one fits.
+3. **Optionally add it to a cluster or track** in `src/exercises/registry.json`. Place it in the relevant cluster's `exercises` array, or add it as a new cluster if no existing one fits.
 
-5. **Run the validator** to catch schema errors:
+4. **Run the validator** to catch schema errors:
    ```bash
    node scripts/validate-exercise.js src/exercises/<your-id>.json
    ```
 
-6. **Run the test suite** to confirm nothing is broken:
+5. **Run the test suite** to confirm nothing is broken:
    ```bash
    npx playwright test
    ```
 
-7. **Open a PR** with a brief description of the exercise and the algorithm concept it teaches.
+6. **Open a PR** with a brief description of the exercise and the algorithm concept it teaches.
 
 ## Exercise Quality Guidelines
 
@@ -148,7 +140,6 @@ Valid `id` examples: `two-sum`, `valid-parentheses`, `min-stack`, `lru-cache2`.
 
 - One exercise per PR (or a base + its direct variants).
 - `node scripts/validate-exercise.js` exits 0.
-- Exercise is registered in `src/exercise-loader.js`.
 - At least 5 test cases (see [Test cases](#test-cases) for coverage guidelines).
 - No changes to `scripts/validate-exercise.js` or `src/exercises/_template.json` unless the PR is specifically updating the schema.
 
