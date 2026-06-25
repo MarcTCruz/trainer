@@ -25,7 +25,7 @@ import { evaluateExercise, ensureQuickJS } from './runner.js';
 import { renderGeometry } from './geometry-render.js';
 import { markSolved, getProgress, getSavedCode, saveDraft, normalizeCode, addBonusXp, recordAttempt, getDifficultyTier, recordSolveInAttempts } from './progress.js';
 import { analyzeSolution } from './linter.js'
-import { initDebugUI, startDebugSession } from './debugger/debugUI.js';
+import { initDebugUI, startDebugSession, isDebugging } from './debugger/debugUI.js';
 import { getCustomTests, addCustomTest, removeCustomTest } from './custom-tests.js';
 import { LINT_RULES } from './lint-rules.js';
 import {
@@ -511,7 +511,7 @@ function dismissEvolutionPrompt() {
   if (existing) existing.remove();
 }
 
-async function handleDebug() {
+async function runDebugTrace() {
   const userCode = getCode(editor)
   const customTests = getCustomTests(currentExercise.id)
   const mergedExercise = customTests.length > 0
@@ -520,6 +520,15 @@ async function handleDebug() {
   const pickerIdx = parseInt(elements.dbgTestPicker.value, 10)
   const testIndex = Number.isFinite(pickerIdx) ? pickerIdx : 0
   await startDebugSession(userCode, mergedExercise, editor, testIndex)
+}
+
+async function handleDebug() {
+  await runDebugTrace()
+}
+
+async function handleTestPickerChange() {
+  if (!isDebugging()) return
+  await runDebugTrace()
 }
 
 function populateTestPicker() {
@@ -1618,6 +1627,7 @@ async function handleFormat() {
 
 initDebugUI(elements);
 elements.debugButton.addEventListener('click', handleDebug);
+elements.dbgTestPicker.addEventListener('change', handleTestPickerChange);
 elements.customTestsToggle.addEventListener('click', () => {
   const form = elements.customTestsForm;
   form.hidden = !form.hidden;

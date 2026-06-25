@@ -183,6 +183,60 @@ test('debugger: selecting a different test case then entering debug keeps debugg
 });
 
 // ---------------------------------------------------------------------------
+// Regression (T-7rdv2j6n): changing #dbg-test-picker mid-debug re-traces.
+// Before the fix the picker had no 'change' listener, so selecting a
+// different case while debugging did nothing.
+// ---------------------------------------------------------------------------
+
+test('debugger: changing the test-case picker while debugging re-traces', async ({ page }) => {
+  await enterDebugMode(page);
+
+  const positionEl = page.locator('#dbg-position');
+  const varsContent = page.locator('#debug-vars-content');
+
+  // Picker is visible now that a debug session is active
+  const picker = page.locator('#dbg-test-picker');
+  await expect(picker).toBeVisible();
+
+  // Snapshot the current trace's total step count and first-frame vars.
+  const initialPos = await positionEl.textContent();
+  const initialTotal = (initialPos.match(/\d+\s*\/\s*(\d+)/) || [])[1];
+  const initialVars = await varsContent.textContent();
+
+  const optionCount = await picker.locator('option').count();
+  expect(optionCount).toBeGreaterThan(1);
+
+  // Select each non-default option until one produces a different trace
+  // (different total step count OR different first-frame variables). The
+  // test inputs vary in length, so at least one alternate case must differ.
+  let reTraced = false;
+  for (let i = 0; i < optionCount; i++) {
+    const value = await picker.locator('option').nth(i).getAttribute('value');
+    if (value === '0') continue;
+
+    await picker.selectOption(value);
+    // Wait for the async re-trace to settle: position shows digits again
+    await expect(positionEl).toContainText(/\d/, { timeout: 15000 });
+
+    const newPos = await positionEl.textContent();
+    const newTotal = (newPos.match(/\d+\s*\/\s*(\d+)/) || [])[1];
+    const newVars = await varsContent.textContent();
+
+    // Debugger must remain active after the re-trace
+    await expect(page.locator('#debug-toolbar')).toBeVisible();
+    await expect(page.locator('#debug-panel')).toBeVisible();
+    expect(newPos).toMatch(/\d+\s*\/\s*\d+/);
+
+    if (newTotal !== initialTotal || newVars !== initialVars) {
+      reTraced = true;
+      break;
+    }
+  }
+
+  expect(reTraced, 'changing the picker mid-debug should re-trace to a different case').toBe(true);
+});
+
+// ---------------------------------------------------------------------------
 // 7. exit debug: stop button hides toolbar/panel and removes .debugging
 // ---------------------------------------------------------------------------
 
