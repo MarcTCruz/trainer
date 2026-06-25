@@ -165,6 +165,31 @@ function renderVars(vars) {
   prevVars = vars
 }
 
+function togglePath(path) {
+  if (expandedPaths.has(path)) {
+    expandedPaths.delete(path)
+    return
+  }
+  expandedPaths.add(path)
+}
+
+function previewOf(snapType, val) {
+  if (snapType === 'Map') return `Map(${val.size})`
+  if (snapType === 'Set') return `Set(${val.size})`
+  if (Array.isArray(val)) return `Array(${val.length})`
+  const keys = Object.keys(val)
+  const head = keys.slice(0, 3).join(', ')
+  const tail = keys.length > 3 ? '…' : ''
+  return `Object {${head}${tail}}`
+}
+
+function entriesOf(snapType, val) {
+  if (snapType === 'Map') return val.entries.map(([k, v]) => [String(k), v])
+  if (snapType === 'Set') return val.values.map((v, i) => [String(i), v])
+  if (Array.isArray(val)) return val.map((v, i) => [String(i), v])
+  return Object.entries(val).filter(([k]) => k !== '__type' && k !== 'size')
+}
+
 function renderVarNode(container, key, val, path, changed, depth) {
   const isExpandable = val !== null && typeof val === 'object' && depth < 3
   const isExpanded = expandedPaths.has(path)
@@ -180,11 +205,7 @@ function renderVarNode(container, key, val, path, changed, depth) {
     toggle.className = 'debug-var-toggle'
     toggle.textContent = isExpanded ? '▼' : '▶'
     toggle.addEventListener('click', () => {
-      if (expandedPaths.has(path)) {
-        expandedPaths.delete(path)
-      } else {
-        expandedPaths.add(path)
-      }
+      togglePath(path)
       renderVars(prevVars)
     })
     nameEl.appendChild(toggle)
@@ -197,13 +218,10 @@ function renderVarNode(container, key, val, path, changed, depth) {
 
   const snapType = val?.__type
   if (isExpandable) {
-    const preview = snapType === 'Map' ? `Map(${val.size})`
-      : snapType === 'Set' ? `Set(${val.size})`
-      : Array.isArray(val) ? `Array(${val.length})`
-      : `Object {${Object.keys(val).slice(0, 3).join(', ')}${Object.keys(val).length > 3 ? '…' : ''}}`
     valEl.className += ' debug-val-object'
-    valEl.textContent = preview
-  } else {
+    valEl.textContent = previewOf(snapType, val)
+  }
+  if (!isExpandable) {
     const { cls, text } = formatValTyped(val)
     valEl.className += ` ${cls}`
     valEl.textContent = text
@@ -215,16 +233,7 @@ function renderVarNode(container, key, val, path, changed, depth) {
 
   if (!isExpandable || !isExpanded) return
 
-  let entries
-  if (snapType === 'Map') {
-    entries = val.entries.map(([k, v]) => [String(k), v])
-  } else if (snapType === 'Set') {
-    entries = val.values.map((v, i) => [String(i), v])
-  } else if (Array.isArray(val)) {
-    entries = val.map((v, i) => [String(i), v])
-  } else {
-    entries = Object.entries(val).filter(([k]) => k !== '__type' && k !== 'size')
-  }
+  const entries = entriesOf(snapType, val)
 
   for (const [childKey, childVal] of entries) {
     renderVarNode(container, childKey, childVal, `${path}.${childKey}`, false, depth + 1)
