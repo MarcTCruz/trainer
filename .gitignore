@@ -9,3 +9,4 @@ _tracker/
 docs/superpowers/
 test-results/
 .pnpm-approve-builds.json
+.web-gemini-id
