@@ -1,0 +1,28 @@
+name: Audit Exercises
+
+on:
+  pull_request:
+    paths:
+      - 'src/exercises/**.json'
+      - '!src/exercises/registry.json'
+      - '!src/exercises/_template.json'
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Find changed exercises
+        id: files
+        run: |
+          FILES=$(git diff --name-only ${{ github.event.pull_request.base.sha }} HEAD -- 'src/exercises/**.json' | grep -v registry.json | grep -v _template.json || true)
+          echo "files=$FILES" >> "$GITHUB_OUTPUT"
+
+      - name: Audit exercises
+        if: steps.files.outputs.files != ''
+        run: node scripts/audit-exercise.js ${{ steps.files.outputs.files }}

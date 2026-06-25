@@ -9,7 +9,8 @@
     "preview": "vite preview",
     "test": "playwright test",
     "test:headed": "playwright test --headed",
-    "check:solvability": "node scripts/check-solvability.js"
+    "check:solvability": "node scripts/check-solvability.js",
+    "audit:exercises": "node scripts/audit-exercise.js"
   },
   "dependencies": {
     "@codemirror/commands": "^6.10.3",

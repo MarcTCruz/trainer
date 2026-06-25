@@ -160,6 +160,29 @@ Valid `id` examples: `two-sum`, `valid-parentheses`, `min-stack`, `lru-cache2`.
 - Set `variantOf` to the base `id`, increment `variantOrder`, and write a `variantPrompt` that frames the new challenge relative to the solution the student just wrote.
 - Submit a base + its variants together in one PR.
 
+## Automated audit
+
+`scripts/audit-exercise.js` runs four checks against every exercise JSON:
+
+1. **Solvability** — executes `referenceSolution` against all `testCases` via a Node `vm` sandbox and fails if any case mismatches or throws. Geometry exercises have the `Point`/`Circle`/`intersect` primitives injected automatically.
+2. **Coverage heuristic** — warns (non-blocking) if no test case covers an empty/zero first argument, a single-element/boundary first argument, or a falsy expected value.
+3. **Duplicate detection** — warns if this exercise's description has a Jaccard token-similarity above 0.7 with any other exercise in `src/exercises/`.
+4. **Starter-code safety** — fails if `starterCode` throws at definition time or hangs for more than 2 seconds.
+
+Run it locally before opening a PR:
+
+```bash
+npm run audit:exercises -- src/exercises/<your-id>.json
+```
+
+Or audit all exercises at once:
+
+```bash
+npm run audit:exercises
+```
+
+`FAIL` findings block merge; `WARN` findings are advisory. CI runs this check automatically on every PR that touches exercise files (see `.github/workflows/audit-exercise.yml`).
+
 ## PR requirements
 
 - One exercise per PR (or a base + its direct variants).
