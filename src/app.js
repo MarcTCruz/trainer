@@ -22,6 +22,7 @@ import { ensureFork, pushSolutionToFork, fetchCIResults, deleteFork } from './ci
 import { registerSW } from 'virtual:pwa-register';
 import { initI18n, t, getLocale, setLocale, SUPPORTED_LOCALES } from './i18n.js';
 import { evaluateExercise, ensureQuickJS } from './runner.js';
+import { renderGeometry } from './geometry-render.js';
 import { markSolved, getProgress, getSavedCode, saveDraft, normalizeCode, addBonusXp, recordAttempt, getDifficultyTier, recordSolveInAttempts } from './progress.js';
 import { analyzeSolution } from './linter.js'
 import { initDebugUI, startDebugSession } from './debugger/debugUI.js';
@@ -45,6 +46,7 @@ const CI_PENDING_KEY = 'trainer_ci_pending';
 const CI_RESULTS_KEY = 'trainer_ci_results';
 const REPO_PUBLIC_KEY = 'trainer_repo_public';
 const RIBBON_VIEW_KEY = 'trainer_ribbon_view';
+const ENGINE_GEOMETRY = 'geometry';
 
 const elements = {
   title: document.getElementById('exercise-title'),
@@ -115,6 +117,9 @@ const elements = {
   sfAuthError: document.getElementById('sf-auth-error'),
   sfConnectButton: document.getElementById('sf-connect-button'),
   sfCancelButton: document.getElementById('sf-cancel-button'),
+  geometrySection: document.getElementById('debug-geometry'),
+  geometryTitle: document.getElementById('debug-geometry-title'),
+  geometryCanvas: document.getElementById('geometry-output'),
 };
 
 const LINT_RULE_META = Object.fromEntries(LINT_RULES.map(r => [r.id, { titleKey: r.titleKey, hintKey: r.hintKey, bonusXp: r.bonusXp }]));
@@ -192,11 +197,13 @@ function loadExercise(id, keepCode = false) {
       editor = createEditor(elements.editorContainer, savedCode || exercise.starterCode);
     }
     window.__testEditor = { setCode: (code) => setCode(editor, code), getCode: () => getCode(editor) };
+    window.__loadExercise = (id) => loadExercise(id, false);
   }
 
   elements.resultsContainer.innerHTML = '';
   elements.statusBar.textContent = '';
   elements.statusBar.className = 'status-message';
+  elements.geometrySection.hidden = true;
   elements.hintContent.textContent = '';
   elements.hintContent.classList.remove('visible');
   elements.hintButton.textContent = t('hint.button', { current: 1, total: exercise.hints?.length ?? 0 });
@@ -629,6 +636,14 @@ async function handleRun() {
 
     elements.wasmStatus.classList.remove('visible');
     renderResults(result);
+
+    elements.geometrySection.hidden = currentExercise.engine !== ENGINE_GEOMETRY;
+    if (currentExercise.engine === ENGINE_GEOMETRY) {
+      const allActuals = result.results.map(r => r.actual).filter(Boolean);
+      const shapes = allActuals.flat();
+      elements.debugPanel.hidden = false;
+      renderGeometry(elements.geometryCanvas, shapes);
+    }
 
     const defaultResults = result.results.filter(r => !r.isCustom);
     if (result.error) {
@@ -1804,6 +1819,7 @@ function applyI18nToDOM() {
   document.querySelector('#debug-vars .debug-section-title').textContent = t('debug.variables');
   document.querySelector('#debug-callstack .debug-section-title').textContent = t('debug.callStack');
   document.querySelector('#debug-dataviz .debug-section-title').textContent = t('debug.data');
+  if (elements.geometryTitle) elements.geometryTitle.textContent = t('debug.geometry');
 
   document.querySelector('#custom-tests-section .debug-section-title').textContent = t('customTest.title');
   elements.customTestsToggle.textContent = t('customTest.add');

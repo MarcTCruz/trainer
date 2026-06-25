@@ -132,6 +132,7 @@
   "debug.capturing": "Capturing trace...",
   "debug.traceError": "Trace error: {error}",
   "debug.stepLimitHit": "Possible infinite loop — showing partial trace ({count} steps)",
+  "debug.geometry": "Geometry Output",
   "customTest.title": "Your Test Cases",
   "customTest.add": "+ Add",
   "customTest.hide": "− Hide",

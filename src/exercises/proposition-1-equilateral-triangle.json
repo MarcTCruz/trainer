@@ -1,0 +1,59 @@
+{
+  "id": "proposition-1-equilateral-triangle",
+  "language": "javascript",
+  "engine": "geometry",
+  "title": "Euclid's Proposition 1: Equilateral Triangle",
+  "difficulty": "Easy",
+  "description": "Construct an equilateral triangle on a given line segment AB.\n\nGiven the endpoints A=(ax, ay) and B=(bx, by) of segment AB, construct an equilateral triangle on it using Euclid's compass-and-straightedge method:\n1. Draw circle C1 centered at A with radius AB.\n2. Draw circle C2 centered at B with radius AB.\n3. Their intersection gives point C (the apex).\n4. Return the three vertices [A, B, C] as `Point` objects.\n\nThe injected primitives are `Point(x, y)`, `Circle(center, radius)`, and `intersect(shapeA, shapeB) → Point[]`.",
+  "functionName": "equilateralTriangle",
+  "params": ["ax", "ay", "bx", "by"],
+  "starterCode": "function equilateralTriangle(ax, ay, bx, by) {\n  const A = Point(ax, ay);\n  const B = Point(bx, by);\n  // Compute the side length\n  const side = Math.sqrt((bx - ax) ** 2 + (by - ay) ** 2);\n  // Draw two circles of radius 'side' centered at A and B\n  // Their intersection is the apex C\n  // Return [A, B, C]\n}",
+  "referenceSolution": "function equilateralTriangle(ax, ay, bx, by) {\n  const A = Point(ax, ay);\n  const B = Point(bx, by);\n  const side = Math.sqrt((bx - ax) ** 2 + (by - ay) ** 2);\n  const cA = Circle(A, side);\n  const cB = Circle(B, side);\n  const pts = intersect(cA, cB);\n  const C = pts[0];\n  return [A, B, C];\n}",
+  "testCases": [
+    {
+      "input": [0, 0, 2, 0],
+      "expected": [
+        {"kind": "point", "x": 0, "y": 0},
+        {"kind": "point", "x": 2, "y": 0},
+        {"kind": "point", "x": 1, "y": 1.7320508075688772}
+      ]
+    },
+    {
+      "input": [0, 0, 4, 0],
+      "expected": [
+        {"kind": "point", "x": 0, "y": 0},
+        {"kind": "point", "x": 4, "y": 0},
+        {"kind": "point", "x": 2, "y": 3.4641016151377544}
+      ]
+    },
+    {
+      "input": [0, 0, 1, 0],
+      "expected": [
+        {"kind": "point", "x": 0, "y": 0},
+        {"kind": "point", "x": 1, "y": 0},
+        {"kind": "point", "x": 0.5, "y": 0.8660254037844386}
+      ]
+    },
+    {
+      "input": [-1, 0, 1, 0],
+      "expected": [
+        {"kind": "point", "x": -1, "y": 0},
+        {"kind": "point", "x": 1, "y": 0},
+        {"kind": "point", "x": 0, "y": 1.7320508075688772}
+      ]
+    },
+    {
+      "input": [0, 0, 0, 2],
+      "expected": [
+        {"kind": "point", "x": 0, "y": 0},
+        {"kind": "point", "x": 0, "y": 2},
+        {"kind": "point", "x": -1.7320508075688772, "y": 1}
+      ]
+    }
+  ],
+  "hints": [
+    "A compass is a Circle in Euclid's constructions. Set the radius to the length of AB.",
+    "Use Math.sqrt((bx-ax)**2 + (by-ay)**2) to compute the side length, then Circle(A, side) and Circle(B, side).",
+    "intersect(circleA, circleB) returns an array of Point objects. The apex is pts[0]."
+  ]
+}

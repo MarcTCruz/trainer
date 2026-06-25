@@ -132,6 +132,7 @@
   "debug.capturing": "Capturando rastreamento...",
   "debug.traceError": "Erro no rastreamento: {error}",
   "debug.stepLimitHit": "Possível loop infinito — mostrando rastreamento parcial ({count} passos)",
+  "debug.geometry": "Saída Geométrica",
   "customTest.title": "Seus Casos de Teste",
   "customTest.add": "+ Adicionar",
   "customTest.hide": "− Ocultar",

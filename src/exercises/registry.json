@@ -35,6 +35,13 @@
         { "day": 29, "exerciseId": "longest-increasing-path","structure": "Graph+DP",    "phase": "synthesis" },
         { "day": 30, "exerciseId": "lru-cache",              "structure": "Capstone",    "phase": "synthesis" }
       ]
+    },
+    {
+      "id": "euclid-elements",
+      "title": "Euclid's Elements",
+      "days": [
+        { "day": 1, "exerciseId": "proposition-1-equilateral-triangle", "structure": "Construction", "phase": "foundations" }
+      ]
     }
   ],
   "clusters": [

@@ -6,6 +6,8 @@ import vm from 'node:vm';
 
 const EXERCISES_DIR = 'src/exercises';
 const EXCLUDED_FILES = new Set(['registry.json', '_template.json']);
+const GEOMETRY_ENGINE = 'geometry';
+const PRIMITIVES_PATH = 'src/engines/geometry/primitives.js';
 
 function deepEqual(a, b) {
   if (a === b) return true;
@@ -57,9 +59,15 @@ function checkExercise(filePath) {
     }
   }
 
+  let prefixSrc = '';
+  if (exercise.engine === GEOMETRY_ENGINE) {
+    const primitivesRaw = readFileSync(resolve(PRIMITIVES_PATH), 'utf8');
+    prefixSrc = primitivesRaw.replace(/^export\s+/gm, '') + '\n';
+  }
+
   const context = vm.createContext({});
   try {
-    vm.runInContext(exercise.referenceSolution, context);
+    vm.runInContext(prefixSrc + exercise.referenceSolution, context);
   } catch (err) {
     return [`"referenceSolution" failed to evaluate: ${err.message}`];
   }
