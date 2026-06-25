@@ -8,7 +8,8 @@
     "build": "vite build",
     "preview": "vite preview",
     "test": "playwright test",
-    "test:headed": "playwright test --headed"
+    "test:headed": "playwright test --headed",
+    "check:solvability": "node scripts/check-solvability.js"
   },
   "dependencies": {
     "@codemirror/commands": "^6.10.3",

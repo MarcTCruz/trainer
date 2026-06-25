@@ -7,16 +7,54 @@
   "difficulty": "Medium",
   "description": "Given a string `s`, find the length of the **longest substring** without repeating characters.\n\n**Example:**\n```\ns = \"abcabcbb\"\nResult = 3\nExplanation: \"abc\" is the longest substring without repeating characters.\n```",
   "functionName": "lengthOfLongestSubstring",
-  "params": ["s"],
+  "params": [
+    "s"
+  ],
   "starterCode": "function lengthOfLongestSubstring(s) {\n  // Your solution here\n  \n}",
+  "referenceSolution": "function lengthOfLongestSubstring(s) {\n  const seen = new Map();\n  let left = 0;\n  let max = 0;\n  for (let right = 0; right < s.length; right++) {\n    const ch = s[right];\n    if (seen.has(ch) && seen.get(ch) >= left) {\n      left = seen.get(ch) + 1;\n    }\n    seen.set(ch, right);\n    max = Math.max(max, right - left + 1);\n  }\n  return max;\n}",
   "testCases": [
-    { "input": ["abcabcbb"], "expected": 3 },
-    { "input": ["bbbbb"], "expected": 1 },
-    { "input": ["pwwkew"], "expected": 3 },
-    { "input": [""], "expected": 0 },
-    { "input": ["au"], "expected": 2 },
-    { "input": [" "], "expected": 1 },
-    { "input": ["dvdf"], "expected": 3 }
+    {
+      "input": [
+        "abcabcbb"
+      ],
+      "expected": 3
+    },
+    {
+      "input": [
+        "bbbbb"
+      ],
+      "expected": 1
+    },
+    {
+      "input": [
+        "pwwkew"
+      ],
+      "expected": 3
+    },
+    {
+      "input": [
+        ""
+      ],
+      "expected": 0
+    },
+    {
+      "input": [
+        "au"
+      ],
+      "expected": 2
+    },
+    {
+      "input": [
+        " "
+      ],
+      "expected": 1
+    },
+    {
+      "input": [
+        "dvdf"
+      ],
+      "expected": 3
+    }
   ],
   "hints": [
     "Use a sliding window: expand right, shrink left when you see a repeat.",

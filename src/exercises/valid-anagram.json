@@ -7,14 +7,48 @@
   "difficulty": "Easy",
   "description": "Given two strings `s` and `t`, return `true` if `t` is an anagram of `s`, and `false` otherwise.\n\nAn anagram is a word formed by rearranging the letters of another, using all original letters exactly once.",
   "functionName": "isAnagram",
-  "params": ["s", "t"],
+  "params": [
+    "s",
+    "t"
+  ],
   "starterCode": "function isAnagram(s, t) {\n  // Your solution here\n  \n}",
+  "referenceSolution": "function isAnagram(s, t) {\n  if (s.length !== t.length) return false;\n  const count = {};\n  for (const ch of s) count[ch] = (count[ch] || 0) + 1;\n  for (const ch of t) {\n    if (!count[ch]) return false;\n    count[ch]--;\n  }\n  return true;\n}",
   "testCases": [
-    { "input": ["anagram", "nagaram"], "expected": true },
-    { "input": ["rat", "car"], "expected": false },
-    { "input": ["", ""], "expected": true },
-    { "input": ["a", "ab"], "expected": false },
-    { "input": ["listen", "silent"], "expected": true }
+    {
+      "input": [
+        "anagram",
+        "nagaram"
+      ],
+      "expected": true
+    },
+    {
+      "input": [
+        "rat",
+        "car"
+      ],
+      "expected": false
+    },
+    {
+      "input": [
+        "",
+        ""
+      ],
+      "expected": true
+    },
+    {
+      "input": [
+        "a",
+        "ab"
+      ],
+      "expected": false
+    },
+    {
+      "input": [
+        "listen",
+        "silent"
+      ],
+      "expected": true
+    }
   ],
   "hints": [
     "An anagram uses the same characters the same number of times.",

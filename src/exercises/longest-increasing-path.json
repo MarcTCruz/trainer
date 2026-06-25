@@ -7,13 +7,74 @@
   "difficulty": "Hard",
   "description": "Given an `m x n` integer matrix, return the length of the longest increasing path.\n\nFrom each cell, you can move in four directions: left, right, up, or down. You **may not** move diagonally or outside the boundary. A path must be **strictly increasing**.\n\nExample:\n```\n[[9,9,4],\n [6,6,8],\n [2,1,1]]\n```\nLongest path: `1 → 2 → 6 → 9`, length `4`.",
   "functionName": "longestIncreasingPath",
-  "params": ["matrix"],
+  "params": [
+    "matrix"
+  ],
   "starterCode": "function longestIncreasingPath(matrix) {\n  // Your solution here\n  \n}",
+  "referenceSolution": "function longestIncreasingPath(matrix) {\n  if (!matrix || matrix.length === 0 || matrix[0].length === 0) return 0;\n  const rows = matrix.length;\n  const cols = matrix[0].length;\n  const memo = Array.from({ length: rows }, () => new Array(cols).fill(0));\n  const DIRS = [[0,1],[0,-1],[1,0],[-1,0]];\n  function dfs(r, c) {\n    if (memo[r][c] > 0) return memo[r][c];\n    let best = 1;\n    for (const [dr, dc] of DIRS) {\n      const nr = r + dr;\n      const nc = c + dc;\n      if (nr < 0 || nr >= rows || nc < 0 || nc >= cols) continue;\n      if (matrix[nr][nc] <= matrix[r][c]) continue;\n      best = Math.max(best, 1 + dfs(nr, nc));\n    }\n    memo[r][c] = best;\n    return best;\n  }\n  let result = 0;\n  for (let r = 0; r < rows; r++) {\n    for (let c = 0; c < cols; c++) {\n      result = Math.max(result, dfs(r, c));\n    }\n  }\n  return result;\n}",
   "testCases": [
-    { "input": [[[9,9,4],[6,6,8],[2,1,1]]], "expected": 4 },
-    { "input": [[[3,4,5],[3,2,6],[2,2,1]]], "expected": 4 },
-    { "input": [[[1]]], "expected": 1 },
-    { "input": [[[]]], "expected": 0 }
+    {
+      "input": [
+        [
+          [
+            9,
+            9,
+            4
+          ],
+          [
+            6,
+            6,
+            8
+          ],
+          [
+            2,
+            1,
+            1
+          ]
+        ]
+      ],
+      "expected": 4
+    },
+    {
+      "input": [
+        [
+          [
+            3,
+            4,
+            5
+          ],
+          [
+            3,
+            2,
+            6
+          ],
+          [
+            2,
+            2,
+            1
+          ]
+        ]
+      ],
+      "expected": 4
+    },
+    {
+      "input": [
+        [
+          [
+            1
+          ]
+        ]
+      ],
+      "expected": 1
+    },
+    {
+      "input": [
+        [
+          []
+        ]
+      ],
+      "expected": 0
+    }
   ],
   "hints": [
     "DFS from every cell, memoize results to avoid recomputation.",

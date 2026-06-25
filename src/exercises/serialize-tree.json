@@ -7,13 +7,81 @@
   "difficulty": "Hard",
   "description": "Implement two operations for a binary tree (represented as nested arrays `[val, left, right]`):\n\n- When `operation` is `\"serialize\"`: convert the tree to a string.\n- When `operation` is `\"deserialize\"`: convert a string back to the tree.\n\nYou decide the format. The serialize/deserialize pair must be inverse operations.\n\n**Note:** For `null` trees, serialize returns `\"null\"` and deserialize returns `null`.",
   "functionName": "codec",
-  "params": ["root", "operation"],
+  "params": [
+    "root",
+    "operation"
+  ],
   "starterCode": "function codec(root, operation) {\n  // Your solution here\n  \n}",
+  "referenceSolution": "function codec(root, operation) {\n  if (operation === 'serialize') {\n    function serialize(node) {\n      if (node === null) return 'null';\n      const [val, left, right] = node;\n      return val + ',' + serialize(left) + ',' + serialize(right);\n    }\n    return serialize(root);\n  }\n  if (operation === 'deserialize') {\n    const vals = root.split(',');\n    let idx = 0;\n    function deserialize() {\n      const val = vals[idx++];\n      if (val === 'null') return null;\n      const left = deserialize();\n      const right = deserialize();\n      return [Number(val), left, right];\n    }\n    return deserialize();\n  }\n}",
   "testCases": [
-    { "input": [[1,[2,null,null],[3,[4,null,null],[5,null,null]]],"serialize"], "expected": "1,2,null,null,3,4,null,null,5,null,null" },
-    { "input": ["1,2,null,null,3,4,null,null,5,null,null","deserialize"], "expected": [1,[2,null,null],[3,[4,null,null],[5,null,null]]] },
-    { "input": [null,"serialize"], "expected": "null" },
-    { "input": ["null","deserialize"], "expected": null }
+    {
+      "input": [
+        [
+          1,
+          [
+            2,
+            null,
+            null
+          ],
+          [
+            3,
+            [
+              4,
+              null,
+              null
+            ],
+            [
+              5,
+              null,
+              null
+            ]
+          ]
+        ],
+        "serialize"
+      ],
+      "expected": "1,2,null,null,3,4,null,null,5,null,null"
+    },
+    {
+      "input": [
+        "1,2,null,null,3,4,null,null,5,null,null",
+        "deserialize"
+      ],
+      "expected": [
+        1,
+        [
+          2,
+          null,
+          null
+        ],
+        [
+          3,
+          [
+            4,
+            null,
+            null
+          ],
+          [
+            5,
+            null,
+            null
+          ]
+        ]
+      ]
+    },
+    {
+      "input": [
+        null,
+        "serialize"
+      ],
+      "expected": "null"
+    },
+    {
+      "input": [
+        "null",
+        "deserialize"
+      ],
+      "expected": null
+    }
   ],
   "hints": [
     "Preorder traversal captures the tree structure completely if you include null markers.",

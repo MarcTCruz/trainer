@@ -7,22 +7,126 @@
   "difficulty": "Medium",
   "description": "Evaluate an arithmetic expression in **Reverse Polish Notation** (postfix).\n\nThe valid operators are `+`, `-`, `*`, and `/`. Each operand is an integer (as a string). Division truncates toward zero.\n\nThe expression is guaranteed to be valid and always produces a single integer result.\n\n**Example:**\n```\ntokens = [\"2\", \"1\", \"+\", \"3\", \"*\"]\nResult = 9\nExplanation: ((2 + 1) * 3) = 9\n```",
   "functionName": "evaluateRPN",
-  "params": ["tokens"],
+  "params": [
+    "tokens"
+  ],
   "starterCode": "function evaluateRPN(tokens) {\n  // Your solution here\n  \n}",
+  "referenceSolution": "function evaluateRPN(tokens) {\n  const stack = [];\n  for (const token of tokens) {\n    if (token === '+' || token === '-' || token === '*' || token === '/') {\n      const b = stack.pop();\n      const a = stack.pop();\n      if (token === '+') { stack.push(a + b); continue; }\n      if (token === '-') { stack.push(a - b); continue; }\n      if (token === '*') { stack.push(a * b); continue; }\n      stack.push(Math.trunc(a / b));\n      continue;\n    }\n    stack.push(Number(token));\n  }\n  return stack[0];\n}",
   "testCases": [
-    { "input": [["2", "1", "+", "3", "*"]], "expected": 9 },
-    { "input": [["4", "13", "5", "/", "+"]], "expected": 6 },
-    { "input": [["3", "4", "+"]], "expected": 7 },
-    { "input": [["5"]], "expected": 5 },
-    { "input": [["2", "3", "-"]], "expected": -1 },
-    { "input": [["6", "2", "/"]], "expected": 3 },
-    { "input": [["10", "3", "/"]], "expected": 3 },
-    { "input": [["-7", "2", "*"]], "expected": -14 },
     {
-      "input": [["10", "6", "9", "3", "+", "-11", "*", "/", "*", "17", "+", "5", "+"]],
+      "input": [
+        [
+          "2",
+          "1",
+          "+",
+          "3",
+          "*"
+        ]
+      ],
+      "expected": 9
+    },
+    {
+      "input": [
+        [
+          "4",
+          "13",
+          "5",
+          "/",
+          "+"
+        ]
+      ],
+      "expected": 6
+    },
+    {
+      "input": [
+        [
+          "3",
+          "4",
+          "+"
+        ]
+      ],
+      "expected": 7
+    },
+    {
+      "input": [
+        [
+          "5"
+        ]
+      ],
+      "expected": 5
+    },
+    {
+      "input": [
+        [
+          "2",
+          "3",
+          "-"
+        ]
+      ],
+      "expected": -1
+    },
+    {
+      "input": [
+        [
+          "6",
+          "2",
+          "/"
+        ]
+      ],
+      "expected": 3
+    },
+    {
+      "input": [
+        [
+          "10",
+          "3",
+          "/"
+        ]
+      ],
+      "expected": 3
+    },
+    {
+      "input": [
+        [
+          "-7",
+          "2",
+          "*"
+        ]
+      ],
+      "expected": -14
+    },
+    {
+      "input": [
+        [
+          "10",
+          "6",
+          "9",
+          "3",
+          "+",
+          "-11",
+          "*",
+          "/",
+          "*",
+          "17",
+          "+",
+          "5",
+          "+"
+        ]
+      ],
       "expected": 22
     },
-    { "input": [["3", "11", "+", "5", "-"]], "expected": 9 }
+    {
+      "input": [
+        [
+          "3",
+          "11",
+          "+",
+          "5",
+          "-"
+        ]
+      ],
+      "expected": 9
+    }
   ],
   "hints": [
     "Process tokens left to right. Numbers go on the stack. When you hit an operator, pop two operands.",

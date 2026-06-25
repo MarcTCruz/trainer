@@ -7,36 +7,159 @@
   "difficulty": "Medium",
   "description": "Extend your Min Stack to also retrieve the **maximum** element in **O(1)** time.\n\nImplement `minMaxStack(operations, values)` that processes a sequence of operations:\n- `\"MinMaxStack\"` — initialize the stack\n- `\"push\"` — push a value onto the stack\n- `\"pop\"` — remove the top element\n- `\"top\"` — return the top element\n- `\"getMin\"` — return the minimum element\n- `\"getMax\"` — return the maximum element\n\nReturn an array of results for each operation (`null` for `MinMaxStack`, `push`, and `pop`).\n\n**Example:**\n```\noperations = [\"MinMaxStack\", \"push\", \"push\", \"push\", \"getMin\", \"getMax\"]\nvalues     = [[], [5], [1], [10], [], []]\nResult     = [null, null, null, null, 1, 10]\n```",
   "functionName": "minMaxStack",
-  "params": ["operations", "values"],
+  "params": [
+    "operations",
+    "values"
+  ],
   "starterCode": "function minMaxStack(operations, values) {\n  // Your solution here\n  \n}",
+  "referenceSolution": "function minMaxStack(operations, values) {\n  const stack = [];\n  const minMaxS = [];\n  const results = [];\n  for (let i = 0; i < operations.length; i++) {\n    const op = operations[i];\n    const args = values[i];\n    if (op === 'MinMaxStack') {\n      results.push(null);\n      continue;\n    }\n    if (op === 'push') {\n      const val = args[0];\n      stack.push(val);\n      const prev = minMaxS.length > 0 ? minMaxS[minMaxS.length - 1] : null;\n      minMaxS.push({\n        min: prev === null ? val : Math.min(val, prev.min),\n        max: prev === null ? val : Math.max(val, prev.max)\n      });\n      results.push(null);\n      continue;\n    }\n    if (op === 'pop') {\n      stack.pop();\n      minMaxS.pop();\n      results.push(null);\n      continue;\n    }\n    if (op === 'top') {\n      results.push(stack[stack.length - 1]);\n      continue;\n    }\n    if (op === 'getMin') {\n      results.push(minMaxS[minMaxS.length - 1].min);\n      continue;\n    }\n    if (op === 'getMax') {\n      results.push(minMaxS[minMaxS.length - 1].max);\n      continue;\n    }\n  }\n  return results;\n}",
   "testCases": [
     {
       "input": [
-        ["MinMaxStack", "push", "push", "push", "getMin", "getMax", "pop", "getMin", "getMax"],
-        [[], [5], [1], [10], [], [], [], [], []]
+        [
+          "MinMaxStack",
+          "push",
+          "push",
+          "push",
+          "getMin",
+          "getMax",
+          "pop",
+          "getMin",
+          "getMax"
+        ],
+        [
+          [],
+          [
+            5
+          ],
+          [
+            1
+          ],
+          [
+            10
+          ],
+          [],
+          [],
+          [],
+          [],
+          []
+        ]
       ],
-      "expected": [null, null, null, null, 1, 10, null, 1, 5]
+      "expected": [
+        null,
+        null,
+        null,
+        null,
+        1,
+        10,
+        null,
+        1,
+        5
+      ]
     },
     {
       "input": [
-        ["MinMaxStack", "push", "getMin", "getMax"],
-        [[], [7], [], []]
+        [
+          "MinMaxStack",
+          "push",
+          "getMin",
+          "getMax"
+        ],
+        [
+          [],
+          [
+            7
+          ],
+          [],
+          []
+        ]
       ],
-      "expected": [null, null, 7, 7]
+      "expected": [
+        null,
+        null,
+        7,
+        7
+      ]
     },
     {
       "input": [
-        ["MinMaxStack", "push", "push", "push", "pop", "getMin", "getMax"],
-        [[], [3], [1], [2], [], [], []]
+        [
+          "MinMaxStack",
+          "push",
+          "push",
+          "push",
+          "pop",
+          "getMin",
+          "getMax"
+        ],
+        [
+          [],
+          [
+            3
+          ],
+          [
+            1
+          ],
+          [
+            2
+          ],
+          [],
+          [],
+          []
+        ]
       ],
-      "expected": [null, null, null, null, null, 1, 3]
+      "expected": [
+        null,
+        null,
+        null,
+        null,
+        null,
+        1,
+        3
+      ]
     },
     {
       "input": [
-        ["MinMaxStack", "push", "push", "push", "getMax", "pop", "getMax", "pop", "getMax"],
-        [[], [2], [5], [3], [], [], [], [], []]
+        [
+          "MinMaxStack",
+          "push",
+          "push",
+          "push",
+          "getMax",
+          "pop",
+          "getMax",
+          "pop",
+          "getMax"
+        ],
+        [
+          [],
+          [
+            2
+          ],
+          [
+            5
+          ],
+          [
+            3
+          ],
+          [],
+          [],
+          [],
+          [],
+          []
+        ]
       ],
-      "expected": [null, null, null, null, 5, null, 5, null, 2]
+      "expected": [
+        null,
+        null,
+        null,
+        null,
+        5,
+        null,
+        5,
+        null,
+        2
+      ]
     },
     {
       "input": [
@@ -53,16 +176,81 @@
           "getMin",
           "getMax"
         ],
-        [[], [-1], [4], [-2], [3], [], [], [], [], [], []]
+        [
+          [],
+          [
+            -1
+          ],
+          [
+            4
+          ],
+          [
+            -2
+          ],
+          [
+            3
+          ],
+          [],
+          [],
+          [],
+          [],
+          [],
+          []
+        ]
       ],
-      "expected": [null, null, null, null, null, -2, 4, null, null, -1, 4]
+      "expected": [
+        null,
+        null,
+        null,
+        null,
+        null,
+        -2,
+        4,
+        null,
+        null,
+        -1,
+        4
+      ]
     },
     {
       "input": [
-        ["MinMaxStack", "push", "push", "getMin", "getMax", "push", "getMin", "getMax"],
-        [[], [0], [0], [], [], [0], [], []]
+        [
+          "MinMaxStack",
+          "push",
+          "push",
+          "getMin",
+          "getMax",
+          "push",
+          "getMin",
+          "getMax"
+        ],
+        [
+          [],
+          [
+            0
+          ],
+          [
+            0
+          ],
+          [],
+          [],
+          [
+            0
+          ],
+          [],
+          []
+        ]
       ],
-      "expected": [null, null, null, 0, 0, null, 0, 0]
+      "expected": [
+        null,
+        null,
+        null,
+        0,
+        0,
+        null,
+        0,
+        0
+      ]
     },
     {
       "input": [
@@ -78,9 +266,37 @@
           "getMin",
           "getMax"
         ],
-        [[], [10], [20], [5], [], [], [], [], [], []]
+        [
+          [],
+          [
+            10
+          ],
+          [
+            20
+          ],
+          [
+            5
+          ],
+          [],
+          [],
+          [],
+          [],
+          [],
+          []
+        ]
       ],
-      "expected": [null, null, null, null, null, 10, 20, null, 10, 10]
+      "expected": [
+        null,
+        null,
+        null,
+        null,
+        null,
+        10,
+        20,
+        null,
+        10,
+        10
+      ]
     }
   ],
   "hints": [

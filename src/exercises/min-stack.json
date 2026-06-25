@@ -7,43 +7,171 @@
   "difficulty": "Medium",
   "description": "Design a stack that supports `push`, `pop`, `top`, and retrieving the minimum element in **O(1)** time.\n\nImplement `minStack(operations, values)` that processes a sequence of operations:\n- `\"MinStack\"` — initialize the stack\n- `\"push\"` — push a value onto the stack\n- `\"pop\"` — remove the top element\n- `\"top\"` — return the top element\n- `\"getMin\"` — return the minimum element\n\nReturn an array of results for each operation (`null` for `MinStack`, `push`, and `pop`).\n\n**Example:**\n```\noperations = [\"MinStack\", \"push\", \"push\", \"push\", \"getMin\", \"pop\", \"top\", \"getMin\"]\nvalues     = [[], [-2], [0], [-3], [], [], [], []]\nResult     = [null, null, null, null, -3, null, 0, -2]\n```",
   "functionName": "minStack",
-  "params": ["operations", "values"],
+  "params": [
+    "operations",
+    "values"
+  ],
   "starterCode": "function minStack(operations, values) {\n  // Your solution here\n  \n}",
+  "referenceSolution": "function minStack(operations, values) {\n  const stack = [];\n  const minS = [];\n  const results = [];\n  for (let i = 0; i < operations.length; i++) {\n    const op = operations[i];\n    const args = values[i];\n    if (op === 'MinStack') {\n      results.push(null);\n      continue;\n    }\n    if (op === 'push') {\n      const val = args[0];\n      stack.push(val);\n      minS.push(minS.length === 0 ? val : Math.min(val, minS[minS.length - 1]));\n      results.push(null);\n      continue;\n    }\n    if (op === 'pop') {\n      stack.pop();\n      minS.pop();\n      results.push(null);\n      continue;\n    }\n    if (op === 'top') {\n      results.push(stack[stack.length - 1]);\n      continue;\n    }\n    if (op === 'getMin') {\n      results.push(minS[minS.length - 1]);\n      continue;\n    }\n  }\n  return results;\n}",
   "testCases": [
     {
       "input": [
-        ["MinStack", "push", "push", "push", "getMin", "pop", "top", "getMin"],
-        [[], [-2], [0], [-3], [], [], [], []]
+        [
+          "MinStack",
+          "push",
+          "push",
+          "push",
+          "getMin",
+          "pop",
+          "top",
+          "getMin"
+        ],
+        [
+          [],
+          [
+            -2
+          ],
+          [
+            0
+          ],
+          [
+            -3
+          ],
+          [],
+          [],
+          [],
+          []
+        ]
       ],
-      "expected": [null, null, null, null, -3, null, 0, -2]
+      "expected": [
+        null,
+        null,
+        null,
+        null,
+        -3,
+        null,
+        0,
+        -2
+      ]
     },
     {
       "input": [
-        ["MinStack", "push", "getMin", "push", "getMin"],
-        [[], [5], [], [3], []]
+        [
+          "MinStack",
+          "push",
+          "getMin",
+          "push",
+          "getMin"
+        ],
+        [
+          [],
+          [
+            5
+          ],
+          [],
+          [
+            3
+          ],
+          []
+        ]
       ],
-      "expected": [null, null, 5, null, 3]
+      "expected": [
+        null,
+        null,
+        5,
+        null,
+        3
+      ]
     },
     {
       "input": [
-        ["MinStack", "push", "push", "push", "pop", "getMin"],
-        [[], [2], [1], [3], [], []]
+        [
+          "MinStack",
+          "push",
+          "push",
+          "push",
+          "pop",
+          "getMin"
+        ],
+        [
+          [],
+          [
+            2
+          ],
+          [
+            1
+          ],
+          [
+            3
+          ],
+          [],
+          []
+        ]
       ],
-      "expected": [null, null, null, null, null, 1]
+      "expected": [
+        null,
+        null,
+        null,
+        null,
+        null,
+        1
+      ]
     },
     {
       "input": [
-        ["MinStack", "push", "getMin", "top"],
-        [[], [42], [], []]
+        [
+          "MinStack",
+          "push",
+          "getMin",
+          "top"
+        ],
+        [
+          [],
+          [
+            42
+          ],
+          [],
+          []
+        ]
       ],
-      "expected": [null, null, 42, 42]
+      "expected": [
+        null,
+        null,
+        42,
+        42
+      ]
     },
     {
       "input": [
-        ["MinStack", "push", "push", "getMin", "pop", "getMin"],
-        [[], [1], [1], [], [], []]
+        [
+          "MinStack",
+          "push",
+          "push",
+          "getMin",
+          "pop",
+          "getMin"
+        ],
+        [
+          [],
+          [
+            1
+          ],
+          [
+            1
+          ],
+          [],
+          [],
+          []
+        ]
       ],
-      "expected": [null, null, null, 1, null, 1]
+      "expected": [
+        null,
+        null,
+        null,
+        1,
+        null,
+        1
+      ]
     },
     {
       "input": [
@@ -61,23 +189,126 @@
           "pop",
           "getMin"
         ],
-        [[], [3], [2], [1], [0], [], [], [], [], [], [], []]
+        [
+          [],
+          [
+            3
+          ],
+          [
+            2
+          ],
+          [
+            1
+          ],
+          [
+            0
+          ],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          []
+        ]
       ],
-      "expected": [null, null, null, null, null, 0, null, 1, null, 2, null, 3]
+      "expected": [
+        null,
+        null,
+        null,
+        null,
+        null,
+        0,
+        null,
+        1,
+        null,
+        2,
+        null,
+        3
+      ]
     },
     {
       "input": [
-        ["MinStack", "push", "push", "push", "getMin", "pop", "getMin", "pop", "getMin"],
-        [[], [-1], [-2], [-3], [], [], [], [], []]
+        [
+          "MinStack",
+          "push",
+          "push",
+          "push",
+          "getMin",
+          "pop",
+          "getMin",
+          "pop",
+          "getMin"
+        ],
+        [
+          [],
+          [
+            -1
+          ],
+          [
+            -2
+          ],
+          [
+            -3
+          ],
+          [],
+          [],
+          [],
+          [],
+          []
+        ]
       ],
-      "expected": [null, null, null, null, -3, null, -2, null, -1]
+      "expected": [
+        null,
+        null,
+        null,
+        null,
+        -3,
+        null,
+        -2,
+        null,
+        -1
+      ]
     },
     {
       "input": [
-        ["MinStack", "push", "push", "getMin", "push", "getMin", "pop", "getMin"],
-        [[], [0], [1], [], [-1], [], [], []]
+        [
+          "MinStack",
+          "push",
+          "push",
+          "getMin",
+          "push",
+          "getMin",
+          "pop",
+          "getMin"
+        ],
+        [
+          [],
+          [
+            0
+          ],
+          [
+            1
+          ],
+          [],
+          [
+            -1
+          ],
+          [],
+          [],
+          []
+        ]
       ],
-      "expected": [null, null, null, 0, null, -1, null, 0]
+      "expected": [
+        null,
+        null,
+        null,
+        0,
+        null,
+        -1,
+        null,
+        0
+      ]
     }
   ],
   "hints": [

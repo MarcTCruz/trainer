@@ -7,14 +7,76 @@
   "difficulty": "Medium",
   "description": "Implement **quick sort**. Given an array of numbers, return a new sorted array in ascending order.\n\nQuick sort selects a pivot element, partitions the array into elements less than and greater than the pivot, then recursively sorts each partition.\n\n**Example:**\n```\nnums = [3, 6, 8, 10, 1, 2, 1]\nResult = [1, 1, 2, 3, 6, 8, 10]\n```",
   "functionName": "quickSort",
-  "params": ["nums"],
+  "params": [
+    "nums"
+  ],
   "starterCode": "function quickSort(nums) {\n  // Your solution here\n  \n}",
+  "referenceSolution": "function quickSort(nums) {\n  if (nums.length <= 1) return nums;\n  const pivot = nums[Math.floor(nums.length / 2)];\n  const less = nums.filter(n => n < pivot);\n  const equal = nums.filter(n => n === pivot);\n  const greater = nums.filter(n => n > pivot);\n  return [...quickSort(less), ...equal, ...quickSort(greater)];\n}",
   "testCases": [
-    { "input": [[3, 6, 8, 10, 1, 2, 1]], "expected": [1, 1, 2, 3, 6, 8, 10] },
-    { "input": [[1]], "expected": [1] },
-    { "input": [[]], "expected": [] },
-    { "input": [[5, 5, 5]], "expected": [5, 5, 5] },
-    { "input": [[9, 1]], "expected": [1, 9] }
+    {
+      "input": [
+        [
+          3,
+          6,
+          8,
+          10,
+          1,
+          2,
+          1
+        ]
+      ],
+      "expected": [
+        1,
+        1,
+        2,
+        3,
+        6,
+        8,
+        10
+      ]
+    },
+    {
+      "input": [
+        [
+          1
+        ]
+      ],
+      "expected": [
+        1
+      ]
+    },
+    {
+      "input": [
+        []
+      ],
+      "expected": []
+    },
+    {
+      "input": [
+        [
+          5,
+          5,
+          5
+        ]
+      ],
+      "expected": [
+        5,
+        5,
+        5
+      ]
+    },
+    {
+      "input": [
+        [
+          9,
+          1
+        ]
+      ],
+      "expected": [
+        1,
+        9
+      ]
+    }
   ],
   "hints": [
     "Pick a pivot element, then partition: smaller elements left, larger right.",

@@ -7,19 +7,127 @@
   "difficulty": "Medium",
   "description": "Extend your RPN evaluator to support two additional operators:\n- `\"^\"` — power operator (`a ^ b`)\n- `\"neg\"` — unary negation (negate the top of the stack)\n\nAll base operators (`+`, `-`, `*`, `/`) still apply. Division still truncates toward zero.\n\n**Example:**\n```\ntokens = [\"2\", \"3\", \"^\"]\nResult = 8\nExplanation: 2 ^ 3 = 8\n```",
   "functionName": "evaluateRPNExtended",
-  "params": ["tokens"],
+  "params": [
+    "tokens"
+  ],
   "starterCode": "function evaluateRPNExtended(tokens) {\n  // Your solution here\n  \n}",
+  "referenceSolution": "function evaluateRPNExtended(tokens) {\n  const stack = [];\n  for (const token of tokens) {\n    if (token === 'neg') {\n      stack.push(-stack.pop());\n      continue;\n    }\n    if (token === '^') {\n      const b = stack.pop();\n      const a = stack.pop();\n      stack.push(Math.pow(a, b));\n      continue;\n    }\n    if (token === '+' || token === '-' || token === '*' || token === '/') {\n      const b = stack.pop();\n      const a = stack.pop();\n      if (token === '+') { stack.push(a + b); continue; }\n      if (token === '-') { stack.push(a - b); continue; }\n      if (token === '*') { stack.push(a * b); continue; }\n      stack.push(Math.trunc(a / b));\n      continue;\n    }\n    stack.push(Number(token));\n  }\n  return stack[0];\n}",
   "testCases": [
-    { "input": [["2", "3", "^"]], "expected": 8 },
-    { "input": [["5", "neg"]], "expected": -5 },
-    { "input": [["2", "3", "^", "1", "-"]], "expected": 7 },
-    { "input": [["3", "neg", "4", "+"]], "expected": 1 },
-    { "input": [["2", "10", "^"]], "expected": 1024 },
-    { "input": [["4", "neg", "neg"]], "expected": 4 },
-    { "input": [["2", "3", "+", "2", "^"]], "expected": 25 },
-    { "input": [["3", "2", "^", "4", "2", "^", "+"]], "expected": 25 },
-    { "input": [["5", "1", "2", "+", "4", "*", "+", "3", "-"]], "expected": 14 },
-    { "input": [["10", "3", "/", "neg"]], "expected": -3 }
+    {
+      "input": [
+        [
+          "2",
+          "3",
+          "^"
+        ]
+      ],
+      "expected": 8
+    },
+    {
+      "input": [
+        [
+          "5",
+          "neg"
+        ]
+      ],
+      "expected": -5
+    },
+    {
+      "input": [
+        [
+          "2",
+          "3",
+          "^",
+          "1",
+          "-"
+        ]
+      ],
+      "expected": 7
+    },
+    {
+      "input": [
+        [
+          "3",
+          "neg",
+          "4",
+          "+"
+        ]
+      ],
+      "expected": 1
+    },
+    {
+      "input": [
+        [
+          "2",
+          "10",
+          "^"
+        ]
+      ],
+      "expected": 1024
+    },
+    {
+      "input": [
+        [
+          "4",
+          "neg",
+          "neg"
+        ]
+      ],
+      "expected": 4
+    },
+    {
+      "input": [
+        [
+          "2",
+          "3",
+          "+",
+          "2",
+          "^"
+        ]
+      ],
+      "expected": 25
+    },
+    {
+      "input": [
+        [
+          "3",
+          "2",
+          "^",
+          "4",
+          "2",
+          "^",
+          "+"
+        ]
+      ],
+      "expected": 25
+    },
+    {
+      "input": [
+        [
+          "5",
+          "1",
+          "2",
+          "+",
+          "4",
+          "*",
+          "+",
+          "3",
+          "-"
+        ]
+      ],
+      "expected": 14
+    },
+    {
+      "input": [
+        [
+          "10",
+          "3",
+          "/",
+          "neg"
+        ]
+      ],
+      "expected": -3
+    }
   ],
   "hints": [
     "The power operator is binary — pop two operands, just like +, -, *, /. Use Math.pow(a, b) or a ** b.",

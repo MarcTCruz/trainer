@@ -7,14 +7,98 @@
   "difficulty": "Medium",
   "description": "Given a binary tree represented as `[val, left, right]`, determine if it is a **valid Binary Search Tree (BST)**.\n\nA valid BST requires:\n- Every node in the left subtree has a value **strictly less than** the node's value.\n- Every node in the right subtree has a value **strictly greater than** the node's value.\n- Both left and right subtrees are also valid BSTs.\n\nUse `null` for missing children.\n\n**Example:**\n```\n[2, [1, null, null], [3, null, null]] → true\n[5, [1, null, null], [4, [3, null, null], [6, null, null]]] → false\n```",
   "functionName": "isValidBST",
-  "params": ["root"],
+  "params": [
+    "root"
+  ],
   "starterCode": "function isValidBST(root) {\n  // Your solution here\n  \n}",
+  "referenceSolution": "function isValidBST(root) {\n  function validate(node, min, max) {\n    if (node === null) return true;\n    const [val, left, right] = node;\n    if (val <= min || val >= max) return false;\n    return validate(left, min, val) && validate(right, val, max);\n  }\n  return validate(root, -Infinity, Infinity);\n}",
   "testCases": [
-    { "input": [[2, [1, null, null], [3, null, null]]], "expected": true },
-    { "input": [[5, [1, null, null], [4, [3, null, null], [6, null, null]]]], "expected": false },
-    { "input": [null], "expected": true },
-    { "input": [[1, null, null]], "expected": true },
-    { "input": [[5, [4, null, null], [6, [3, null, null], [7, null, null]]]], "expected": false }
+    {
+      "input": [
+        [
+          2,
+          [
+            1,
+            null,
+            null
+          ],
+          [
+            3,
+            null,
+            null
+          ]
+        ]
+      ],
+      "expected": true
+    },
+    {
+      "input": [
+        [
+          5,
+          [
+            1,
+            null,
+            null
+          ],
+          [
+            4,
+            [
+              3,
+              null,
+              null
+            ],
+            [
+              6,
+              null,
+              null
+            ]
+          ]
+        ]
+      ],
+      "expected": false
+    },
+    {
+      "input": [
+        null
+      ],
+      "expected": true
+    },
+    {
+      "input": [
+        [
+          1,
+          null,
+          null
+        ]
+      ],
+      "expected": true
+    },
+    {
+      "input": [
+        [
+          5,
+          [
+            4,
+            null,
+            null
+          ],
+          [
+            6,
+            [
+              3,
+              null,
+              null
+            ],
+            [
+              7,
+              null,
+              null
+            ]
+          ]
+        ]
+      ],
+      "expected": false
+    }
   ],
   "hints": [
     "A BST isn't just 'left < root < right' at each node — it's a global constraint.",

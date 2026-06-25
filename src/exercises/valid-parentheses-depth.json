@@ -4,24 +4,100 @@
   "difficulty": "Medium",
   "description": "Given a string `s` and a maximum nesting depth `maxDepth`, determine if the brackets are valid AND the nesting never exceeds `maxDepth`.\n\nA nesting depth is how many unclosed opening brackets exist at any point.\n\nFor example, in `((()))` the max depth is 3. If `maxDepth` is 2, this is invalid.",
   "functionName": "isValidDepth",
-  "params": ["s", "maxDepth"],
+  "params": [
+    "s",
+    "maxDepth"
+  ],
   "starterCode": "function isValidDepth(s, maxDepth) {\n  // Your solution here\n  \n}",
+  "referenceSolution": "function isValidDepth(s, maxDepth) {\n  const stack = [];\n  const pairs = { ')': '(', ']': '[', '}': '{' };\n  for (const ch of s) {\n    if ('([{'.includes(ch)) {\n      stack.push(ch);\n      if (stack.length > maxDepth) return false;\n      continue;\n    }\n    if (stack.pop() !== pairs[ch]) return false;\n  }\n  return stack.length === 0;\n}",
   "variantOf": "valid-parentheses",
   "variantOrder": 2,
   "variantPrompt": "Your solution validates bracket matching. Now enforce a maximum nesting depth — can you track how deep the stack grows?",
   "testCases": [
-    { "input": ["()", 1], "expected": true },
-    { "input": ["(())", 2], "expected": true },
-    { "input": ["(())", 1], "expected": false },
-    { "input": ["((()))", 3], "expected": true },
-    { "input": ["((()))", 2], "expected": false },
-    { "input": ["()[]{}", 1], "expected": true },
-    { "input": ["{[()]}", 3], "expected": true },
-    { "input": ["{[()]}", 2], "expected": false },
-    { "input": ["", 0], "expected": true },
-    { "input": ["(", 1], "expected": false },
-    { "input": ["(]", 1], "expected": false },
-    { "input": ["({[]})", 3], "expected": true }
+    {
+      "input": [
+        "()",
+        1
+      ],
+      "expected": true
+    },
+    {
+      "input": [
+        "(())",
+        2
+      ],
+      "expected": true
+    },
+    {
+      "input": [
+        "(())",
+        1
+      ],
+      "expected": false
+    },
+    {
+      "input": [
+        "((()))",
+        3
+      ],
+      "expected": true
+    },
+    {
+      "input": [
+        "((()))",
+        2
+      ],
+      "expected": false
+    },
+    {
+      "input": [
+        "()[]{}",
+        1
+      ],
+      "expected": true
+    },
+    {
+      "input": [
+        "{[()]}",
+        3
+      ],
+      "expected": true
+    },
+    {
+      "input": [
+        "{[()]}",
+        2
+      ],
+      "expected": false
+    },
+    {
+      "input": [
+        "",
+        0
+      ],
+      "expected": true
+    },
+    {
+      "input": [
+        "(",
+        1
+      ],
+      "expected": false
+    },
+    {
+      "input": [
+        "(]",
+        1
+      ],
+      "expected": false
+    },
+    {
+      "input": [
+        "({[]})",
+        3
+      ],
+      "expected": true
+    }
   ],
   "hints": [
     "You still need the stack for matching. What additional piece of state tracks depth?",

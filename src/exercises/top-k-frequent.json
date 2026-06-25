@@ -7,12 +7,60 @@
   "difficulty": "Medium",
   "description": "Given an integer array `nums` and an integer `k`, return the `k` most frequent elements.\n\nYou may return the answer in **any order**. The test cases sort the output for determinism, so your function should also return the result **sorted in ascending order**.\n\nExample: `nums = [1,1,1,2,2,3]`, `k = 2` → `[1,2]`",
   "functionName": "topKFrequent",
-  "params": ["nums", "k"],
+  "params": [
+    "nums",
+    "k"
+  ],
   "starterCode": "function topKFrequent(nums, k) {\n  // Your solution here\n  \n}",
+  "referenceSolution": "function topKFrequent(nums, k) {\n  const freq = new Map();\n  for (const n of nums) freq.set(n, (freq.get(n) || 0) + 1);\n  return [...freq.entries()]\n    .sort((a, b) => b[1] - a[1])\n    .slice(0, k)\n    .map(e => e[0])\n    .sort((a, b) => a - b);\n}",
   "testCases": [
-    { "input": [[1, 1, 1, 2, 2, 3], 2], "expected": [1, 2] },
-    { "input": [[1], 1], "expected": [1] },
-    { "input": [[4, 4, 4, 1, 1, 2, 2, 2], 2], "expected": [2, 4] }
+    {
+      "input": [
+        [
+          1,
+          1,
+          1,
+          2,
+          2,
+          3
+        ],
+        2
+      ],
+      "expected": [
+        1,
+        2
+      ]
+    },
+    {
+      "input": [
+        [
+          1
+        ],
+        1
+      ],
+      "expected": [
+        1
+      ]
+    },
+    {
+      "input": [
+        [
+          4,
+          4,
+          4,
+          1,
+          1,
+          2,
+          2,
+          2
+        ],
+        2
+      ],
+      "expected": [
+        2,
+        4
+      ]
+    }
   ],
   "hints": [
     "Count frequencies first using an object as a hash map.",

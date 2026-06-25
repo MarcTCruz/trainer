@@ -7,12 +7,58 @@
   "difficulty": "Easy",
   "description": "Given a binary tree represented as `[val, left, right]`, return its **maximum depth**.\n\nThe maximum depth is the number of nodes along the longest path from the root down to the farthest leaf node.\n\nUse `null` for missing children. Use `null` as the root for an empty tree.\n\n**Example:**\n```\nroot = [3, [9, null, null], [20, [15, null, null], [7, null, null]]]\nResult = 3\n```",
   "functionName": "maxDepth",
-  "params": ["root"],
+  "params": [
+    "root"
+  ],
   "starterCode": "function maxDepth(root) {\n  // Your solution here\n  \n}",
+  "referenceSolution": "function maxDepth(root) {\n  if (root === null) return 0;\n  const [, left, right] = root;\n  return 1 + Math.max(maxDepth(left), maxDepth(right));\n}",
   "testCases": [
-    { "input": [[3, [9, null, null], [20, [15, null, null], [7, null, null]]]], "expected": 3 },
-    { "input": [[1, null, [2, null, null]]], "expected": 2 },
-    { "input": [null], "expected": 0 }
+    {
+      "input": [
+        [
+          3,
+          [
+            9,
+            null,
+            null
+          ],
+          [
+            20,
+            [
+              15,
+              null,
+              null
+            ],
+            [
+              7,
+              null,
+              null
+            ]
+          ]
+        ]
+      ],
+      "expected": 3
+    },
+    {
+      "input": [
+        [
+          1,
+          null,
+          [
+            2,
+            null,
+            null
+          ]
+        ]
+      ],
+      "expected": 2
+    },
+    {
+      "input": [
+        null
+      ],
+      "expected": 0
+    }
   ],
   "hints": [
     "The depth of a tree is 1 + the max depth of its subtrees.",

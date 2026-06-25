@@ -48,6 +48,22 @@ function serveWasmFromDeps() {
   };
 }
 
+const EXERCISE_JSON_RE = /src\/exercises\/(?!registry|_template)[^/]+\.json$/;
+
+function stripReferenceSolution() {
+  return {
+    name: 'strip-reference-solution',
+    enforce: 'pre',
+    transform(src, id) {
+      if (!EXERCISE_JSON_RE.test(id)) return null;
+      const data = JSON.parse(src);
+      delete data.referenceSolution;
+      // Return stripped JSON — vite:json transform (runs after) wraps it in ESM.
+      return { code: JSON.stringify(data), map: null };
+    },
+  };
+}
+
 export default defineConfig({
   base: '/trainer/',
   build: {
@@ -56,6 +72,7 @@ export default defineConfig({
   },
   plugins: [
     serveWasmFromDeps(),
+    stripReferenceSolution(),
     VitePWA({
       registerType: 'prompt',
       includeAssets: ['favicon.svg', 'icons/icon-192.png', 'icons/icon-512.png'],
@@ -91,6 +108,7 @@ export default defineConfig({
       },
       workbox: {
         globPatterns: ['**/*.{js,css,html,wasm,json}'],
+        globIgnores: ['exercises/*.json'],
         navigateFallback: '/trainer/index.html',
         runtimeCaching: [
           {

@@ -7,16 +7,62 @@
   "difficulty": "Medium",
   "description": "Implement a first-in-first-out (FIFO) queue using only two stacks.\n\nGiven arrays `operations` (strings: `\"push\"`, `\"pop\"`, `\"peek\"`, `\"empty\"`) and `values` (corresponding values — `null` for non-push ops), execute them on a queue implemented with two stacks and return an array of results:\n- `push(x)` → `null`\n- `pop()` → the removed front value\n- `peek()` → the front value without removing it\n- `empty()` → `true` or `false`",
   "functionName": "queueOperations",
-  "params": ["operations", "values"],
+  "params": [
+    "operations",
+    "values"
+  ],
   "starterCode": "function queueOperations(operations, values) {\n  // Your solution here\n  \n}",
+  "referenceSolution": "function queueOperations(operations, values) {\n  const inbox = [];\n  const outbox = [];\n  const results = [];\n  function transfer() {\n    if (outbox.length > 0) return;\n    while (inbox.length > 0) outbox.push(inbox.pop());\n  }\n  for (let i = 0; i < operations.length; i++) {\n    const op = operations[i];\n    const args = values[i];\n    if (op === 'push') {\n      inbox.push(args[0]);\n      results.push(null);\n      continue;\n    }\n    if (op === 'pop') {\n      transfer();\n      results.push(outbox.pop());\n      continue;\n    }\n    if (op === 'peek') {\n      transfer();\n      results.push(outbox[outbox.length - 1]);\n      continue;\n    }\n    if (op === 'empty') {\n      results.push(inbox.length === 0 && outbox.length === 0);\n      continue;\n    }\n  }\n  return results;\n}",
   "testCases": [
     {
-      "input": [["push", "push", "peek", "pop", "empty"], [[1], [2], null, null, null]],
-      "expected": [null, null, 1, 1, false]
+      "input": [
+        [
+          "push",
+          "push",
+          "peek",
+          "pop",
+          "empty"
+        ],
+        [
+          [
+            1
+          ],
+          [
+            2
+          ],
+          null,
+          null,
+          null
+        ]
+      ],
+      "expected": [
+        null,
+        null,
+        1,
+        1,
+        false
+      ]
     },
     {
-      "input": [["push", "pop", "empty"], [[1], null, null]],
-      "expected": [null, 1, true]
+      "input": [
+        [
+          "push",
+          "pop",
+          "empty"
+        ],
+        [
+          [
+            1
+          ],
+          null,
+          null
+        ]
+      ],
+      "expected": [
+        null,
+        1,
+        true
+      ]
     }
   ],
   "hints": [

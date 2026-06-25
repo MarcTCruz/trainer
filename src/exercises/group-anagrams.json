@@ -7,12 +7,62 @@
   "difficulty": "Medium",
   "description": "Given an array of strings `strs`, group the anagrams together. Return the result as an array of arrays.\n\nAnagrams are words formed by rearranging the same letters.\n\n**For deterministic output:** sort each group alphabetically, then sort the groups by their first element.\n\n**Example:**\n```\nstrs = [\"eat\",\"tea\",\"tan\",\"ate\",\"nat\",\"bat\"]\nResult = [[\"ate\",\"eat\",\"tea\"],[\"bat\"],[\"nat\",\"tan\"]]\n```",
   "functionName": "groupAnagrams",
-  "params": ["strs"],
+  "params": [
+    "strs"
+  ],
   "starterCode": "function groupAnagrams(strs) {\n  // Your solution here\n  \n}",
+  "referenceSolution": "function groupAnagrams(strs) {\n  const map = {};\n  for (const s of strs) {\n    const key = s.split('').sort().join('');\n    if (!map[key]) map[key] = [];\n    map[key].push(s);\n  }\n  return Object.values(map)\n    .map(group => group.sort())\n    .sort((a, b) => a[0].localeCompare(b[0]));\n}",
   "testCases": [
-    { "input": [["eat","tea","tan","ate","nat","bat"]], "expected": [["ate","eat","tea"],["bat"],["nat","tan"]] },
-    { "input": [[""]], "expected": [[""]] },
-    { "input": [["a"]], "expected": [["a"]] }
+    {
+      "input": [
+        [
+          "eat",
+          "tea",
+          "tan",
+          "ate",
+          "nat",
+          "bat"
+        ]
+      ],
+      "expected": [
+        [
+          "ate",
+          "eat",
+          "tea"
+        ],
+        [
+          "bat"
+        ],
+        [
+          "nat",
+          "tan"
+        ]
+      ]
+    },
+    {
+      "input": [
+        [
+          ""
+        ]
+      ],
+      "expected": [
+        [
+          ""
+        ]
+      ]
+    },
+    {
+      "input": [
+        [
+          "a"
+        ]
+      ],
+      "expected": [
+        [
+          "a"
+        ]
+      ]
+    }
   ],
   "hints": [
     "Anagrams have the same characters — what if you sorted each word's letters?",

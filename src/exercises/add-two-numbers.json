@@ -7,12 +7,74 @@
   "difficulty": "Medium",
   "description": "You are given two non-empty arrays representing two non-negative integers. The digits are stored in **reverse order** (least significant digit first), and each element contains a single digit.\n\nAdd the two numbers and return the sum as an array in the same format.\n\nExample: `[2,4,3]` + `[5,6,4]` = 342 + 465 = 807 → `[7,0,8]`",
   "functionName": "addTwoNumbers",
-  "params": ["l1", "l2"],
+  "params": [
+    "l1",
+    "l2"
+  ],
   "starterCode": "function addTwoNumbers(l1, l2) {\n  // Your solution here\n  \n}",
+  "referenceSolution": "function addTwoNumbers(l1, l2) {\n  const result = [];\n  let carry = 0;\n  let i = 0;\n  while (i < l1.length || i < l2.length || carry > 0) {\n    const a = i < l1.length ? l1[i] : 0;\n    const b = i < l2.length ? l2[i] : 0;\n    const sum = a + b + carry;\n    result.push(sum % 10);\n    carry = Math.floor(sum / 10);\n    i++;\n  }\n  return result;\n}",
   "testCases": [
-    { "input": [[2,4,3],[5,6,4]], "expected": [7,0,8] },
-    { "input": [[0],[0]], "expected": [0] },
-    { "input": [[9,9,9,9,9,9,9],[9,9,9,9]], "expected": [8,9,9,9,0,0,0,1] }
+    {
+      "input": [
+        [
+          2,
+          4,
+          3
+        ],
+        [
+          5,
+          6,
+          4
+        ]
+      ],
+      "expected": [
+        7,
+        0,
+        8
+      ]
+    },
+    {
+      "input": [
+        [
+          0
+        ],
+        [
+          0
+        ]
+      ],
+      "expected": [
+        0
+      ]
+    },
+    {
+      "input": [
+        [
+          9,
+          9,
+          9,
+          9,
+          9,
+          9,
+          9
+        ],
+        [
+          9,
+          9,
+          9,
+          9
+        ]
+      ],
+      "expected": [
+        8,
+        9,
+        9,
+        9,
+        0,
+        0,
+        0,
+        1
+      ]
+    }
   ],
   "hints": [
     "Process both arrays simultaneously, digit by digit, tracking the carry.",

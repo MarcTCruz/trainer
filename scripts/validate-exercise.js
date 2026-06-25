@@ -72,6 +72,14 @@ function validateExercise(filePath) {
     }
   }
 
+  if (typeof exercise.referenceSolution !== 'string' || !exercise.referenceSolution) {
+    errors.push('"referenceSolution" must be a non-empty string');
+  } else if (typeof exercise.functionName === 'string' && exercise.functionName) {
+    if (!exercise.referenceSolution.includes(exercise.functionName)) {
+      errors.push(`"referenceSolution" must contain the function name "${exercise.functionName}"`);
+    }
+  }
+
   if (!Array.isArray(exercise.testCases) || exercise.testCases.length === 0) {
     errors.push('"testCases" must be a non-empty array');
   } else {

@@ -7,13 +7,59 @@
   "difficulty": "Medium",
   "description": "You are given an integer array `height` of length `n`. There are `n` vertical lines drawn such that the two endpoints of the `i`th line are `(i, 0)` and `(i, height[i])`.\n\nFind two lines that together with the x-axis form a container, such that the container contains the most water.\n\nReturn the maximum amount of water a container can store.\n\nExample: `height = [1,8,6,2,5,4,8,3,7]` → `49` (lines at index 1 and 8: min(8,7) * (8-1) = 7*7 = 49)",
   "functionName": "maxArea",
-  "params": ["height"],
+  "params": [
+    "height"
+  ],
   "starterCode": "function maxArea(height) {\n  // Your solution here\n  \n}",
+  "referenceSolution": "function maxArea(height) {\n  let left = 0;\n  let right = height.length - 1;\n  let max = 0;\n  while (left < right) {\n    const area = Math.min(height[left], height[right]) * (right - left);\n    if (area > max) max = area;\n    if (height[left] <= height[right]) { left++; continue; }\n    right--;\n  }\n  return max;\n}",
   "testCases": [
-    { "input": [[1,8,6,2,5,4,8,3,7]], "expected": 49 },
-    { "input": [[1,1]], "expected": 1 },
-    { "input": [[4,3,2,1,4]], "expected": 16 },
-    { "input": [[1,2,1]], "expected": 2 }
+    {
+      "input": [
+        [
+          1,
+          8,
+          6,
+          2,
+          5,
+          4,
+          8,
+          3,
+          7
+        ]
+      ],
+      "expected": 49
+    },
+    {
+      "input": [
+        [
+          1,
+          1
+        ]
+      ],
+      "expected": 1
+    },
+    {
+      "input": [
+        [
+          4,
+          3,
+          2,
+          1,
+          4
+        ]
+      ],
+      "expected": 16
+    },
+    {
+      "input": [
+        [
+          1,
+          2,
+          1
+        ]
+      ],
+      "expected": 2
+    }
   ],
   "hints": [
     "Two pointers: start from both ends, move inward.",

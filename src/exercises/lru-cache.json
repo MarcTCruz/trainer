@@ -7,16 +7,101 @@
   "difficulty": "Hard",
   "description": "Design a data structure that follows the **Least Recently Used (LRU)** cache eviction policy.\n\nYour function receives:\n- `capacity`: the max number of items\n- `operations`: array of `\"get\"` or `\"put\"` strings\n- `args`: array of argument arrays (`[key]` for get, `[key, value]` for put)\n\nReturn an array of results: `get` returns the value or `-1` if not found; `put` returns `null`.\n\nExample: capacity=2, ops=[\"put\",\"put\",\"get\",\"put\",\"get\",\"put\",\"get\",\"get\",\"get\"], args=[[1,1],[2,2],[1],[3,3],[2],[4,4],[1],[3],[4]] → [null,null,1,null,-1,null,-1,3,4]",
   "functionName": "lruCache",
-  "params": ["capacity", "operations", "args"],
+  "params": [
+    "capacity",
+    "operations",
+    "args"
+  ],
   "starterCode": "function lruCache(capacity, operations, args) {\n  // Your solution here\n  \n}",
+  "referenceSolution": "function lruCache(capacity, operations, args) {\n  const map = new Map();\n  const results = [];\n  for (let i = 0; i < operations.length; i++) {\n    const op = operations[i];\n    const opArgs = args[i];\n    if (op === 'get') {\n      const key = opArgs[0];\n      if (!map.has(key)) {\n        results.push(-1);\n        continue;\n      }\n      const val = map.get(key);\n      map.delete(key);\n      map.set(key, val);\n      results.push(val);\n      continue;\n    }\n    if (op === 'put') {\n      const [key, value] = opArgs;\n      if (map.has(key)) map.delete(key);\n      map.set(key, value);\n      if (map.size > capacity) {\n        const firstKey = map.keys().next().value;\n        map.delete(firstKey);\n      }\n      results.push(null);\n      continue;\n    }\n  }\n  return results;\n}",
   "testCases": [
     {
-      "input": [2, ["put","put","get","put","get","put","get","get","get"], [[1,1],[2,2],[1],[3,3],[2],[4,4],[1],[3],[4]]],
-      "expected": [null,null,1,null,-1,null,-1,3,4]
+      "input": [
+        2,
+        [
+          "put",
+          "put",
+          "get",
+          "put",
+          "get",
+          "put",
+          "get",
+          "get",
+          "get"
+        ],
+        [
+          [
+            1,
+            1
+          ],
+          [
+            2,
+            2
+          ],
+          [
+            1
+          ],
+          [
+            3,
+            3
+          ],
+          [
+            2
+          ],
+          [
+            4,
+            4
+          ],
+          [
+            1
+          ],
+          [
+            3
+          ],
+          [
+            4
+          ]
+        ]
+      ],
+      "expected": [
+        null,
+        null,
+        1,
+        null,
+        -1,
+        null,
+        -1,
+        3,
+        4
+      ]
     },
     {
-      "input": [1, ["put","put","get"], [[1,1],[2,2],[1]]],
-      "expected": [null,null,-1]
+      "input": [
+        1,
+        [
+          "put",
+          "put",
+          "get"
+        ],
+        [
+          [
+            1,
+            1
+          ],
+          [
+            2,
+            2
+          ],
+          [
+            1
+          ]
+        ]
+      ],
+      "expected": [
+        null,
+        null,
+        -1
+      ]
     }
   ],
   "hints": [

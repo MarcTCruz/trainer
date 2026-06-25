@@ -76,6 +76,28 @@ Aim for at least 5 test cases covering:
 - A tricky or counterintuitive case
 - At least one negative / false result (if applicable)
 
+## Reference solution
+
+Every exercise must include a `referenceSolution` field — a complete, correct JavaScript function that passes all test cases. Place it in the JSON immediately after `starterCode`.
+
+The value must be a top-level `function` declaration using the exact `functionName`:
+
+```json
+"referenceSolution": "function twoSum(nums, target) {\n  const map = new Map();\n  // ...\n  return [i, j];\n}"
+```
+
+Verify it passes every test case before opening a PR:
+
+```bash
+node scripts/check-solvability.js src/exercises/<your-id>.json
+```
+
+The reference solution is **automatically stripped from the production build** — the Vite plugin removes it at build time so the answer never ships to users. You can confirm with:
+
+```bash
+npx vite build && grep -rl referenceSolution dist 2>/dev/null && echo "LEAK" || echo "STRIPPED-OK"
+```
+
 ## Naming conventions
 
 - **File name:** `<id>.json` — kebab-case, all lowercase, numbers allowed, no underscores.
