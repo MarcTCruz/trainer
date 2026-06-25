@@ -222,6 +222,14 @@ export const STOCK_SPAN_SOLUTION = `function stockSpan(prices) {
 // ---------------------------------------------------------------------------
 
 export async function solveParenthesesFamily(page) {
+  // Wait for the exercise to finish loading before pasting — after a page
+  // reload the app restores progress and navigates asynchronously, so the
+  // editor's bound exercise (and its functionName) may still be the previous
+  // one when this helper starts. Without this guard, Run executes against a
+  // stale functionName and flakes (e.g. "isValidDepth is not a function").
+  await expect(page.locator('#exercise-title')).toContainText('Valid Parentheses', {
+    timeout: 10000
+  });
   await pasteCode(page, CORRECT_SOLUTION);
   await page.locator('#run-button').click();
   await expect(page.locator('#status-message')).toContainText('All tests passed', {
@@ -237,6 +245,10 @@ export async function solveParenthesesFamily(page) {
 }
 
 export async function solveMinStackFamily(page) {
+  // Guard against the post-reload navigation race (see solveParenthesesFamily).
+  await expect(page.locator('#exercise-title')).toContainText('Min Stack', {
+    timeout: 10000
+  });
   await pasteCode(page, MIN_STACK_SOLUTION);
   await page.locator('#run-button').click();
   await expect(page.locator('#status-message')).toContainText('All tests passed', {
@@ -252,6 +264,10 @@ export async function solveMinStackFamily(page) {
 }
 
 export async function solveRPNFamily(page) {
+  // Guard against the post-reload navigation race (see solveParenthesesFamily).
+  await expect(page.locator('#exercise-title')).toContainText('Evaluate Reverse Polish Notation', {
+    timeout: 10000
+  });
   await pasteCode(page, RPN_SOLUTION);
   await page.locator('#run-button').click();
   await expect(page.locator('#status-message')).toContainText('All tests passed', {
@@ -267,6 +283,10 @@ export async function solveRPNFamily(page) {
 }
 
 export async function solveDailyTemperaturesFamily(page) {
+  // Guard against the post-reload navigation race (see solveParenthesesFamily).
+  await expect(page.locator('#exercise-title')).toContainText('Daily Temperatures', {
+    timeout: 10000
+  });
   await pasteCode(page, DAILY_TEMPS_SOLUTION);
   await page.locator('#run-button').click();
   await expect(page.locator('#status-message')).toContainText('All tests passed', {
