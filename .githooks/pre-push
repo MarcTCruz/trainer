@@ -1,0 +1,22 @@
+#!/usr/bin/env bash
+# Mechanical CI-parity gate.
+#
+# Blocks any push that would fail the GitHub Pages deploy's install/build
+# steps — the exact failure mode that silently froze the live site from
+# 2026-06-21 to 2026-06-27 (stale pnpm-lock.yaml, then an unresolved
+# build import). Runs the SAME commands CI runs so "passes here" means
+# "passes the deploy gate".
+#
+# Activate once per clone:
+#   git config core.hooksPath .githooks
+set -euo pipefail
+
+cd "$(git rev-parse --show-toplevel)"
+
+echo "[pre-push] pnpm install --frozen-lockfile (lockfile-drift check)…"
+pnpm install --frozen-lockfile
+
+echo "[pre-push] pnpm run build…"
+pnpm run build >/dev/null
+
+echo "[pre-push] OK — install + build match the CI deploy gate."
