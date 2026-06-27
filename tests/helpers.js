@@ -5,6 +5,10 @@
 
 import { expect } from '@playwright/test';
 
+export async function flushStorage(page) {
+  await page.evaluate(() => window.__testStorageFlush?.());
+}
+
 // ---------------------------------------------------------------------------
 // Helper: paste code into the CodeMirror editor
 // ---------------------------------------------------------------------------
@@ -242,6 +246,7 @@ export async function solveParenthesesFamily(page) {
   await expect(page.locator('#status-message')).toContainText('All tests passed', {
     timeout: 15000
   });
+  await flushStorage(page);
 }
 
 export async function solveMinStackFamily(page) {
@@ -261,6 +266,7 @@ export async function solveMinStackFamily(page) {
   await expect(page.locator('#status-message')).toContainText('All tests passed', {
     timeout: 15000
   });
+  await flushStorage(page);
 }
 
 export async function solveRPNFamily(page) {
@@ -280,6 +286,7 @@ export async function solveRPNFamily(page) {
   await expect(page.locator('#status-message')).toContainText('All tests passed', {
     timeout: 15000
   });
+  await flushStorage(page);
 }
 
 export async function solveDailyTemperaturesFamily(page) {
@@ -299,6 +306,7 @@ export async function solveDailyTemperaturesFamily(page) {
   await expect(page.locator('#status-message')).toContainText('All tests passed', {
     timeout: 15000
   });
+  await flushStorage(page);
 }
 
 // ---------------------------------------------------------------------------

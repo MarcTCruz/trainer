@@ -1,4 +1,4 @@
-import { init as initStorage, get, set, clearAll } from './storage.js';
+import { init as initStorage, get, set, clearAll, flush } from './storage.js';
 import { createEditor, getCode, setCode, onFormat, onChange } from './editor.js';
 import {
   saveToken,
@@ -197,6 +197,7 @@ function loadExercise(id, keepCode = false) {
       editor = createEditor(elements.editorContainer, savedCode || exercise.starterCode);
     }
     window.__testEditor = { setCode: (code) => setCode(editor, code), getCode: () => getCode(editor) };
+    window.__testStorageFlush = flush;
     window.__loadExercise = (id) => loadExercise(id, false);
   }
 

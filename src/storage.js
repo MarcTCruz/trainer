@@ -4,6 +4,7 @@ const DB_VERSION = 1;
 
 const cache = new Map();
 let db = null;
+const pending = new Set();
 
 const LEGACY_KEYS = ['trainer_v1', 'trainer_github_token', 'trainer_github_user'];
 
@@ -30,6 +31,18 @@ function idbGet(key) {
 function idbPut(key, value) {
   const tx = db.transaction(STORE_NAME, 'readwrite');
   tx.objectStore(STORE_NAME).put(value, key);
+  const write = new Promise((resolve) => {
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => resolve();
+    tx.onabort = () => resolve();
+  });
+  pending.add(write);
+  write.finally(() => pending.delete(write));
+  return write;
+}
+
+export async function flush() {
+  await Promise.all([...pending]);
 }
 
 function idbDelete(key) {

@@ -1,6 +1,7 @@
 import { test, expect } from '@playwright/test';
 import {
   pasteCode,
+  flushStorage,
   CORRECT_SOLUTION,
   MIN_STACK_SOLUTION,
   MIN_MAX_STACK_SOLUTION,
@@ -27,6 +28,7 @@ test('Min Stack exercise loads after solving parentheses family and reloading', 
   await solveParenthesesFamily(page);
 
   // Both parentheses exercises solved — reload so resolveStartExercise picks min-stack
+  await flushStorage(page);
   await page.reload();
   await expect(page.locator('#exercise-title')).toContainText('Min Stack', { timeout: 5000 });
   const editor = page.locator('.cm-content');
@@ -38,6 +40,7 @@ test('Min Stack correct solution passes all 8 test cases', async ({ page }) => {
 
   // Solve parentheses family so resolveStartExercise advances to min-stack, then reload
   await solveParenthesesFamily(page);
+  await flushStorage(page);
   await page.reload();
   await expect(page.locator('#exercise-title')).toContainText('Min Stack', { timeout: 5000 });
 
@@ -58,6 +61,7 @@ test('Min Max Stack variant loads after solving Min Stack and passes all tests',
 
   // Advance past parentheses family, reload to land on min-stack
   await solveParenthesesFamily(page);
+  await flushStorage(page);
   await page.reload();
   await expect(page.locator('#exercise-title')).toContainText('Min Stack', { timeout: 5000 });
 
@@ -94,9 +98,11 @@ test('Min Max Stack variant loads after solving Min Stack and passes all tests',
 test('Evaluate RPN exercise loads after solving all prior exercises', async ({ page }) => {
   await page.goto('/');
   await solveParenthesesFamily(page);
+  await flushStorage(page);
   await page.reload();
   await expect(page.locator('#exercise-title')).toContainText('Min Stack', { timeout: 5000 });
   await solveMinStackFamily(page);
+  await flushStorage(page);
   await page.reload();
   await expect(page.locator('#exercise-title')).toContainText('Evaluate Reverse Polish Notation', {
     timeout: 5000
@@ -108,9 +114,11 @@ test('Evaluate RPN exercise loads after solving all prior exercises', async ({ p
 test('Evaluate RPN correct solution passes all 10 test cases', async ({ page }) => {
   await page.goto('/');
   await solveParenthesesFamily(page);
+  await flushStorage(page);
   await page.reload();
   await expect(page.locator('#exercise-title')).toContainText('Min Stack', { timeout: 5000 });
   await solveMinStackFamily(page);
+  await flushStorage(page);
   await page.reload();
   await expect(page.locator('#exercise-title')).toContainText('Evaluate Reverse Polish Notation', {
     timeout: 5000
@@ -128,9 +136,11 @@ test('Evaluate RPN correct solution passes all 10 test cases', async ({ page }) 
 test('Extended RPN variant loads after solving RPN and passes all 11 test cases', async ({ page }) => {
   await page.goto('/');
   await solveParenthesesFamily(page);
+  await flushStorage(page);
   await page.reload();
   await expect(page.locator('#exercise-title')).toContainText('Min Stack', { timeout: 5000 });
   await solveMinStackFamily(page);
+  await flushStorage(page);
   await page.reload();
   await expect(page.locator('#exercise-title')).toContainText('Evaluate Reverse Polish Notation', {
     timeout: 5000
@@ -170,19 +180,23 @@ test('ribbon shows Array Patterns pill alongside Stack Fundamentals', async ({ p
 test('Two Sum exercise loads after solving all Stack exercises', async ({ page }) => {
   await page.goto('/');
   await solveParenthesesFamily(page);
+  await flushStorage(page);
   await page.reload();
   await expect(page.locator('#exercise-title')).toContainText('Min Stack', { timeout: 5000 });
   await solveMinStackFamily(page);
+  await flushStorage(page);
   await page.reload();
   await expect(page.locator('#exercise-title')).toContainText('Evaluate Reverse Polish Notation', {
     timeout: 5000
   });
   await solveRPNFamily(page);
+  await flushStorage(page);
   await page.reload();
   await expect(page.locator('#exercise-title')).toContainText('Daily Temperatures', {
     timeout: 5000
   });
   await solveDailyTemperaturesFamily(page);
+  await flushStorage(page);
   await page.reload();
   await expect(page.locator('#exercise-title')).toContainText('Two Sum', { timeout: 5000 });
   const editor = page.locator('.cm-content');
@@ -193,12 +207,16 @@ test('Two Sum correct solution passes all 8 test cases', async ({ page }) => {
   await page.goto('/');
   // Solve all stacks to advance to arrays cluster
   await solveParenthesesFamily(page);
+  await flushStorage(page);
   await page.reload();
   await solveMinStackFamily(page);
+  await flushStorage(page);
   await page.reload();
   await solveRPNFamily(page);
+  await flushStorage(page);
   await page.reload();
   await solveDailyTemperaturesFamily(page);
+  await flushStorage(page);
   await page.reload();
   await expect(page.locator('#exercise-title')).toContainText('Two Sum', { timeout: 5000 });
 
@@ -215,12 +233,16 @@ test('Three Sum variant loads after solving Two Sum and passes all tests', async
   await page.goto('/');
   // Solve all stacks + Two Sum
   await solveParenthesesFamily(page);
+  await flushStorage(page);
   await page.reload();
   await solveMinStackFamily(page);
+  await flushStorage(page);
   await page.reload();
   await solveRPNFamily(page);
+  await flushStorage(page);
   await page.reload();
   await solveDailyTemperaturesFamily(page);
+  await flushStorage(page);
   await page.reload();
   await expect(page.locator('#exercise-title')).toContainText('Two Sum', { timeout: 5000 });
 
@@ -341,6 +363,7 @@ test('forward-test indicator not shown when 0 variant tests pass', async ({ page
 
   // Solve parentheses family to advance
   await solveParenthesesFamily(page);
+  await flushStorage(page);
   await page.reload();
   await expect(page.locator('#exercise-title')).toContainText('Min Stack', { timeout: 5000 });
 
@@ -373,10 +396,13 @@ test('Daily Temperatures exercise loads after solving all prior Stack exercises'
 }) => {
   await page.goto('/');
   await solveParenthesesFamily(page);
+  await flushStorage(page);
   await page.reload();
   await solveMinStackFamily(page);
+  await flushStorage(page);
   await page.reload();
   await solveRPNFamily(page);
+  await flushStorage(page);
   await page.reload();
   await expect(page.locator('#exercise-title')).toContainText('Daily Temperatures', {
     timeout: 5000
@@ -388,10 +414,13 @@ test('Daily Temperatures exercise loads after solving all prior Stack exercises'
 test('Daily Temperatures correct solution passes all 8 test cases', async ({ page }) => {
   await page.goto('/');
   await solveParenthesesFamily(page);
+  await flushStorage(page);
   await page.reload();
   await solveMinStackFamily(page);
+  await flushStorage(page);
   await page.reload();
   await solveRPNFamily(page);
+  await flushStorage(page);
   await page.reload();
   await expect(page.locator('#exercise-title')).toContainText('Daily Temperatures', {
     timeout: 5000
@@ -411,10 +440,13 @@ test('Stock Span variant loads after solving Daily Temperatures and passes all t
 }) => {
   await page.goto('/');
   await solveParenthesesFamily(page);
+  await flushStorage(page);
   await page.reload();
   await solveMinStackFamily(page);
+  await flushStorage(page);
   await page.reload();
   await solveRPNFamily(page);
+  await flushStorage(page);
   await page.reload();
   await expect(page.locator('#exercise-title')).toContainText('Daily Temperatures', {
     timeout: 5000
