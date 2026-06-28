@@ -108,7 +108,7 @@ const elements = {
   customTestsList: document.getElementById('custom-tests-list'),
   autoFormatCheckbox: document.getElementById('auto-format-checkbox'),
   viewClusters: document.getElementById('view-clusters'),
-  viewTrack: document.getElementById('view-track'),
+  ribbonControls: document.getElementById('ribbon-controls'),
   sfModal: document.getElementById('sf-modal'),
   sfModalBackdrop: document.getElementById('sf-modal-backdrop'),
   sfModalClose: document.getElementById('sf-modal-close'),
@@ -128,7 +128,13 @@ let editor;
 let currentHintIndex = 0;
 let currentExercise = null;
 let lastLintReport = null;
-let ribbonView = get(RIBBON_VIEW_KEY) || 'clusters';
+function resolveRibbonView(stored) {
+  if (!stored || stored === 'clusters') return 'clusters';
+  const validTrackIds = new Set(getAllTracks().map((track) => track.id));
+  return validTrackIds.has(stored) ? stored : 'clusters';
+}
+
+let ribbonView = resolveRibbonView(get(RIBBON_VIEW_KEY));
 
 function resolveStartExercise() {
   const progress = getProgress();
@@ -358,11 +364,11 @@ async function renderRibbon() {
   });
 }
 
-async function renderTrackRibbon() {
+async function renderTrackRibbon(trackId) {
   const container = elements.ribbon;
   if (!container) return;
 
-  const trackDays = getTrackExercises('thirty-days');
+  const trackDays = getTrackExercises(trackId);
   if (!trackDays.length) return;
 
   const progress = getProgress();
@@ -424,11 +430,11 @@ async function renderTrackRibbon() {
 }
 
 function updateRibbon() {
-  if (ribbonView === 'track') {
-    renderTrackRibbon();
-  } else {
+  if (ribbonView === 'clusters') {
     renderRibbon();
+    return;
   }
+  renderTrackRibbon(ribbonView);
 }
 
 const HINT_BASE_DELAY_MS = 0;
@@ -441,12 +447,13 @@ const DIFFICULTY_HINT_MULTIPLIER = {
 
 
 function syncViewToggle() {
-  if (!elements.viewClusters || !elements.viewTrack) return;
-  const isClusters = ribbonView === 'clusters';
-  elements.viewClusters.classList.toggle('active', isClusters);
-  elements.viewTrack.classList.toggle('active', !isClusters);
-  elements.viewClusters.setAttribute('aria-pressed', String(isClusters));
-  elements.viewTrack.setAttribute('aria-pressed', String(!isClusters));
+  if (!elements.ribbonControls) return;
+  elements.ribbonControls.querySelectorAll('.ribbon-view-btn').forEach((btn) => {
+    const btnView = btn.dataset.trackId ?? 'clusters';
+    const isActive = ribbonView === btnView;
+    btn.classList.toggle('active', isActive);
+    btn.setAttribute('aria-pressed', String(isActive));
+  });
 }
 
 function showEvolutionPrompt(nextVariant, forwardResult) {
@@ -1666,12 +1673,29 @@ if (elements.viewClusters) {
   });
 }
 
-if (elements.viewTrack) {
-  elements.viewTrack.addEventListener('click', () => {
-    ribbonView = 'track';
-    set(RIBBON_VIEW_KEY, ribbonView);
-    syncViewToggle();
-    updateRibbon();
+function renderTrackControls() {
+  if (!elements.ribbonControls) return;
+  elements.ribbonControls.querySelectorAll('[data-track-id]').forEach((el) => el.remove());
+
+  getAllTracks().forEach((track) => {
+    const btn = document.createElement('button');
+    btn.className = 'ribbon-view-btn';
+    btn.type = 'button';
+    btn.dataset.trackId = track.id;
+    btn.setAttribute('aria-pressed', 'false');
+    btn.textContent = track.title;
+    btn.addEventListener('click', () => {
+      ribbonView = track.id;
+      set(RIBBON_VIEW_KEY, ribbonView);
+      syncViewToggle();
+      updateRibbon();
+      const days = getTrackExercises(track.id);
+      const progress = getProgress();
+      const solved = progress.completedExercises;
+      const firstUnlocked = days.find((d, i) => i === 0 || Boolean(solved[days[i - 1].exerciseId]));
+      if (firstUnlocked) loadExercise(firstUnlocked.exerciseId, false);
+    });
+    elements.ribbonControls.appendChild(btn);
   });
 }
 
@@ -1848,7 +1872,6 @@ function applyI18nToDOM() {
   elements.customTestAdd.textContent = t('customTest.addButton');
 
   if (elements.viewClusters) elements.viewClusters.textContent = t('ribbon.clusters');
-  if (elements.viewTrack) elements.viewTrack.textContent = t('ribbon.thirtyDays');
 
   renderLocaleSelector();
 }
@@ -1914,6 +1937,7 @@ async function boot() {
   applyI18nToDOM();
   initServiceWorker();
   setupOfflineIndicator();
+  renderTrackControls();
   loadExercise(resolveStartExercise());
   syncViewToggle();
   renderAuthState();

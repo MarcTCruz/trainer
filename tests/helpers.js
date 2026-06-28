@@ -424,4 +424,5 @@ export const I18N_EXEMPT_PATTERNS = [
   /del\.textContent/,
   /violations\.textContent/,
   /\.textContent\s*=\s*org\./,
+  /\.textContent\s*=\s*track\./,
 ];
