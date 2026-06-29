@@ -1,5 +1,5 @@
 const GITHUB_API = 'https://api.github.com';
-const VALIDATOR_REPO = 'refactory-validator';
+export const VALIDATOR_REPO = 'refactory-validator';
 const VALIDATOR_OWNER = 'MarcTCruz';
 const SOLUTIONS_DIR = 'solutions';
 const EXERCISE_ID_PATTERN = /^[a-z0-9-]+$/;

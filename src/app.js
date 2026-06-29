@@ -18,7 +18,7 @@ import {
   isSalesforceConnected,
 } from './salesforce-auth.js';
 import { ensureRepo, pushSolution, pushProgress, syncOnLogin, setRepoVisibility, pushReadme } from './github-sync.js';
-import { ensureFork, pushSolutionToFork, fetchCIResults, deleteFork } from './ci-sync.js';
+import { ensureFork, pushSolutionToFork, fetchCIResults, deleteFork, VALIDATOR_REPO } from './ci-sync.js';
 import { registerSW } from 'virtual:pwa-register';
 import { initI18n, t, getLocale, setLocale, SUPPORTED_LOCALES } from './i18n.js';
 import { evaluateExercise, ensureQuickJS } from './runner.js';
@@ -977,14 +977,16 @@ function renderClearDataButton(section, token, user) {
   const clearBtn = makeButton('clear-data-button', 'btn btn-ghost btn-danger', 'data.clearButton');
 
   clearBtn.addEventListener('click', () => {
-    renderClearConfirm(section, token, user);
+    renderDeleteForkConfirm(section, token, user);
   });
 
   section.appendChild(clearBtn);
 }
 
-function renderClearConfirm(section, token, user) {
+function renderDeleteForkConfirm(section, token, user) {
   if (document.getElementById('clear-confirm-card')) return;
+
+  const repoFullName = `${user.login}/${VALIDATOR_REPO}`;
 
   const card = document.createElement('div');
   card.className = 'ci-consent-card';
@@ -994,13 +996,28 @@ function renderClearConfirm(section, token, user) {
   heading.textContent = t('data.clearConfirmHeading');
 
   const text = document.createElement('p');
-  text.textContent = t('data.clearConfirmText');
+  text.textContent = t('data.clearConfirmText', { repo: repoFullName });
 
-  const confirmBtn = document.createElement('button');
-  confirmBtn.className = 'btn btn-ghost btn-danger';
-  confirmBtn.type = 'button';
-  confirmBtn.textContent = t('data.clearConfirmAction');
-  confirmBtn.addEventListener('click', () => handleClearAll(section, token, user));
+  const instruction = document.createElement('p');
+  instruction.textContent = t('data.clearConfirmTypeName', { repo: repoFullName });
+
+  const input = document.createElement('input');
+  input.type = 'text';
+  input.id = 'clear-confirm-input';
+  input.setAttribute('aria-label', t('data.clearConfirmTypeName', { repo: repoFullName }));
+
+  const deleteBtn = document.createElement('button');
+  deleteBtn.id = 'clear-confirm-action';
+  deleteBtn.className = 'btn btn-ghost btn-danger';
+  deleteBtn.type = 'button';
+  deleteBtn.textContent = t('data.clearConfirmAction');
+  deleteBtn.disabled = true;
+
+  input.addEventListener('input', () => {
+    deleteBtn.disabled = input.value.trim() !== repoFullName;
+  });
+
+  deleteBtn.addEventListener('click', () => handleDeleteFork(section, token, user));
 
   const cancelBtn = document.createElement('button');
   cancelBtn.className = 'btn btn-ghost';
@@ -1010,33 +1027,37 @@ function renderClearConfirm(section, token, user) {
 
   card.appendChild(heading);
   card.appendChild(text);
-  card.appendChild(confirmBtn);
+  card.appendChild(instruction);
+  card.appendChild(input);
+  card.appendChild(deleteBtn);
   card.appendChild(cancelBtn);
   section.appendChild(card);
 }
 
-async function handleClearAll(section, token, user) {
+async function handleDeleteFork(section, token, user) {
+  const repoFullName = `${user.login}/${VALIDATOR_REPO}`;
+
   try {
     await deleteFork(token, user.login);
   } catch (err) {
-    console.warn('deleteFork failed (non-fatal):', err.message);
+    const card = document.getElementById('clear-confirm-card');
+    const errorMsg = document.createElement('p');
+    errorMsg.textContent = t('data.clearError');
+    card.appendChild(errorMsg);
+    const deleteBtn = document.getElementById('clear-confirm-action');
+    deleteBtn.disabled = false;
+    return;
   }
 
-  if (get(REPO_PUBLIC_KEY)) {
-    try {
-      await setRepoVisibility(token, user.login, false);
-    } catch (err) {
-      console.warn('setRepoVisibility on clear failed (non-fatal):', err.message);
-    }
-  }
-
-  clearAll();
+  const card = document.getElementById('clear-confirm-card');
+  card.remove();
 
   const msg = document.createElement('div');
   msg.className = 'clear-done-message';
+  msg.id = 'clear-done-message';
 
   const done = document.createElement('p');
-  done.textContent = t('data.clearDone');
+  done.textContent = t('data.clearDone', { repo: repoFullName });
 
   const revokeLink = document.createElement('a');
   revokeLink.href = 'https://github.com/settings/tokens';
@@ -1046,7 +1067,6 @@ async function handleClearAll(section, token, user) {
 
   msg.appendChild(done);
   msg.appendChild(revokeLink);
-  section.innerHTML = '';
   section.appendChild(msg);
 }
 
