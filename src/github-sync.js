@@ -97,6 +97,14 @@ export async function pushProgress(token, owner, state) {
   return putFile(token, owner, PROGRESS_PATH, JSON.stringify(state, null, 2), 'Update progress');
 }
 
+export async function getRepoVisibility(token, owner) {
+  const res = await githubFetch(token, repoUrl(owner));
+  if (res.status === 404) return { exists: false, isPublic: false };
+  if (!res.ok) throw new GitHubSyncError('getRepoVisibility failed', res.status);
+  const repo = await res.json();
+  return { exists: true, isPublic: !repo.private };
+}
+
 export async function setRepoVisibility(token, owner, makePublic) {
   const res = await githubFetch(token, repoUrl(owner), {
     method: 'PATCH',

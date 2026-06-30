@@ -17,7 +17,7 @@ import {
   validateAndFetchOrg,
   isSalesforceConnected,
 } from './salesforce-auth.js';
-import { ensureRepo, pushSolution, pushProgress, syncOnLogin, setRepoVisibility, pushReadme } from './github-sync.js';
+import { ensureRepo, pushSolution, pushProgress, syncOnLogin, getRepoVisibility, setRepoVisibility, pushReadme } from './github-sync.js';
 import { ensureFork, pushSolutionToFork, fetchCIResults, deleteFork, VALIDATOR_REPO } from './ci-sync.js';
 import { registerSW } from 'virtual:pwa-register';
 import { initI18n, t, getLocale, setLocale, SUPPORTED_LOCALES } from './i18n.js';
@@ -934,34 +934,7 @@ function makeButton(id, className, labelKey) {
   return btn;
 }
 
-function renderVisibilityToggle(section, token, user) {
-  const isPublic = !!get(REPO_PUBLIC_KEY);
-  const toggleBtn = makeButton(
-    'visibility-toggle-button',
-    'btn btn-ghost',
-    isPublic ? 'share.makePrivate' : 'share.makePublic',
-  );
-
-  toggleBtn.addEventListener('click', async () => {
-    const nowPublic = !get(REPO_PUBLIC_KEY);
-    toggleBtn.disabled = true;
-    toggleBtn.textContent = t(nowPublic ? 'share.makingPublic' : 'share.makingPrivate');
-    try {
-      await setRepoVisibility(token, user.login, nowPublic);
-      if (nowPublic) await pushReadme(token, user.login, getProgress());
-      set(REPO_PUBLIC_KEY, nowPublic ? true : null);
-      renderAuthState();
-    } catch (err) {
-      console.warn('setRepoVisibility failed:', err.message);
-      toggleBtn.disabled = false;
-      toggleBtn.textContent = t(isPublic ? 'share.makePrivate' : 'share.makePublic');
-    }
-  });
-
-  section.appendChild(toggleBtn);
-
-  if (!isPublic) return;
-
+function makeShareLink(user) {
   const shareLink = makeButton('share-solutions-button', 'btn btn-ghost', 'share.shareLink');
   shareLink.addEventListener('click', () => {
     const url = `https://github.com/${user.login}/refactory-solutions`;
@@ -970,7 +943,71 @@ function renderVisibilityToggle(section, token, user) {
       setTimeout(() => { shareLink.textContent = t('share.shareLink'); }, 2000);
     });
   });
-  section.appendChild(shareLink);
+  return shareLink;
+}
+
+async function onToggleClick(wrap, btn, token, user, makePublic) {
+  btn.disabled = true;
+  btn.textContent = t(makePublic ? 'share.makingPublic' : 'share.makingPrivate');
+  try {
+    await setRepoVisibility(token, user.login, makePublic);
+    if (makePublic) await pushReadme(token, user.login, getProgress());
+    set(REPO_PUBLIC_KEY, makePublic ? true : null);
+    showPwaToast(makePublic ? 'share.publishedToast' : 'share.hiddenToast');
+    wrap.innerHTML = '';
+    fillControl(wrap, token, user, makePublic);
+  } catch (err) {
+    console.warn('setRepoVisibility failed:', err.message);
+    btn.disabled = false;
+    btn.textContent = t(makePublic ? 'share.makePublic' : 'share.makePrivate');
+    showPwaToast('share.visibilityError');
+  }
+}
+
+function fillControl(wrap, token, user, isPublic) {
+  if (isPublic) {
+    const badge = document.createElement('span');
+    badge.id = 'repo-visibility-badge';
+    badge.className = 'visibility-badge';
+    badge.textContent = t('share.publicBadge');
+    wrap.appendChild(badge);
+  }
+
+  const toggleBtn = makeButton(
+    'visibility-toggle-button',
+    'btn btn-ghost',
+    isPublic ? 'share.makePrivate' : 'share.makePublic',
+  );
+  toggleBtn.addEventListener('click', () => onToggleClick(wrap, toggleBtn, token, user, !isPublic));
+  wrap.appendChild(toggleBtn);
+
+  if (!isPublic) return;
+
+  wrap.appendChild(makeShareLink(user));
+}
+
+function renderVisibilityToggle(section, token, user) {
+  const wrap = document.createElement('span');
+  wrap.className = 'visibility-control';
+
+  const loading = document.createElement('span');
+  loading.id = 'visibility-loading';
+  loading.textContent = t('share.checkingVisibility');
+  wrap.appendChild(loading);
+
+  section.appendChild(wrap);
+
+  (async () => {
+    try {
+      const { isPublic } = await getRepoVisibility(token, user.login);
+      wrap.innerHTML = '';
+      fillControl(wrap, token, user, isPublic);
+    } catch (err) {
+      console.warn('getRepoVisibility failed:', err.message);
+      wrap.innerHTML = '';
+      fillControl(wrap, token, user, false);
+    }
+  })();
 }
 
 function renderClearDataButton(section, token, user) {
