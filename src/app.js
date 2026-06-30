@@ -1107,8 +1107,23 @@ async function handleDeleteFork(section, token, user) {
   section.appendChild(msg);
 }
 
-function renderYourDataButton(section) {
-  const btn = makeButton('your-data-button', 'btn btn-ghost', 'data.yourDataButton');
+function renderStoragePolicyLink(section) {
+  const link = document.createElement('button');
+  link.id = 'storage-policy-button';
+  link.type = 'button';
+  link.className = 'info-link';
+
+  const icon = document.createElement('span');
+  icon.className = 'info-icon';
+  icon.setAttribute('aria-hidden', 'true');
+  icon.textContent = 'ⓘ';
+
+  const label = document.createElement('span');
+  label.textContent = t('data.storagePolicyButton');
+
+  link.appendChild(icon);
+  link.appendChild(label);
+
   let infoVisible = false;
 
   const info = document.createElement('div');
@@ -1128,12 +1143,12 @@ function renderYourDataButton(section) {
     info.appendChild(p);
   }
 
-  btn.addEventListener('click', () => {
+  link.addEventListener('click', () => {
     infoVisible = !infoVisible;
     info.hidden = !infoVisible;
   });
 
-  section.appendChild(btn);
+  section.appendChild(link);
   section.appendChild(info);
 }
 
@@ -1190,7 +1205,7 @@ function renderAuthState() {
   const token = getToken();
   renderVisibilityToggle(actions, token, user);
   renderClearDataButton(actions, token, user);
-  renderYourDataButton(actions);
+  renderStoragePolicyLink(actions);
 
   section.appendChild(actions);
 

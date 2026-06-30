@@ -25,7 +25,7 @@
   "data.githubRepos": "GitHub: Your solutions are in a private repo (refactory-solutions). CI verification uses a fork of refactory-validator.",
   "data.retention": "Retention: Data stays until you delete it.",
   "data.revokeToken": "Revoke your PAT at GitHub →",
-  "data.yourDataButton": "Your Data",
+  "data.storagePolicyButton": "Storage Policy",
   "auth.signIn": "Sign in",
   "auth.signOut": "Sign out",
   "auth.signInTitle": "Sign in with GitHub",
